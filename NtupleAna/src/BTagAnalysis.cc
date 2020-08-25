@@ -46,8 +46,9 @@ const float OfflineDeepFlavourLooseCut2017   = 0.0521;
 BTagAnalysis::BTagAnalysis(TChain* _eventsRAW, TChain* _eventsAOD, fwlite::TFileService& fs, bool _isMC, std::string _year, int _histogramming, bool _debug, std::string PUFileName, std::string jetDetailString, const edm::ParameterSet& nnConfig){
   if(_debug) cout<<"In BTagAnalysis constructor"<<endl;
   debug      = _debug;
-  isMC       = _isMC;
+  isMC       = false;
   year       = _year;
+  //offComp    = false;
   eventsRAW     = _eventsRAW;
   eventsRAW->SetBranchStatus("*", 0);
 
@@ -105,6 +106,9 @@ BTagAnalysis::BTagAnalysis(TChain* _eventsRAW, TChain* _eventsAOD, fwlite::TFile
   hOffJets                = new nTupleAnalysis::jetHists("offJets",               fs, "", jetDetailString);
   hOffJets_matched        = new nTupleAnalysis::jetHists("offJets_matched",       fs, "", jetDetailString);
   hOffJets_matchedJet     = new nTupleAnalysis::jetHists("offJets_matchedJet",    fs, "", jetDetailString);
+  
+  hOffJets_matchedJet_comp     = new nTupleAnalysis::jetHists("offJets_matchedJet_comp",    fs, "", jetDetailString);
+  
   if(doCaloJets){
     hOffJets_matchedCalo    = new nTupleAnalysis::jetHists("offJets_matchedCalo",   fs, "", jetDetailString);
     hOffJets_matchedCaloJet = new nTupleAnalysis::jetHists("offJets_matchedCaloJet",fs, "", jetDetailString);
@@ -152,7 +156,15 @@ BTagAnalysis::BTagAnalysis(TChain* _eventsRAW, TChain* _eventsAOD, fwlite::TFile
 
     hOffJets_matched_B        = new nTupleAnalysis::jetHists("offJets_matched_B",       fs, "", jetDetailString );
     hOffJets_matchedJet_B     = new nTupleAnalysis::jetHists("offJets_matchedJet_B",    fs, "", jetDetailString );
+   
+    hOffJets_matchedJet_B_comp_good        = new nTupleAnalysis::jetHists("offJets_matchedJet_B_good",       fs, "", jetDetailString );
+    hOffJets_matchedJet_B_comp_bad         = new nTupleAnalysis::jetHists("offJets_matchedJet_B_bad",    fs, "", jetDetailString );
+   
+    hOffJets_matched_B_comp_good           = new nTupleAnalysis::jetHists("offJets_matched_B_good",       fs, "", jetDetailString );
+    hOffJets_matched_B_comp_bad            = new nTupleAnalysis::jetHists("offJets_matched_B_bad",       fs, "", jetDetailString );
+   //FIXME above
 
+    
     hOffJets_matched_C        = new nTupleAnalysis::jetHists("offJets_matched_C",       fs, "");
     hOffJets_matchedJet_C     = new nTupleAnalysis::jetHists("offJets_matchedJet_C",    fs, "");
 
@@ -170,8 +182,10 @@ BTagAnalysis::BTagAnalysis(TChain* _eventsRAW, TChain* _eventsAOD, fwlite::TFile
 
   }
 
-  hPfJets          = new nTupleAnalysis::jetHists("pfJets",           fs, "");
-  hPfJets_matched  = new nTupleAnalysis::jetHists("pfJets_matched",           fs, "");
+  hPfJets                    = new nTupleAnalysis::jetHists("pfJets",           fs, "");
+  hPfJets_matched            = new nTupleAnalysis::jetHists("pfJets_matched",           fs, "");
+  //hPfJets_matched_comp       = new nTupleAnalysis::jetHists("pfJets_matched",           fs, ""); //FIXME new plot
+
 
 
   if(doCaloJets){
@@ -589,17 +603,26 @@ int BTagAnalysis::processEvent(){
 
       //
       // Testing Neural Net
+      //FIXME
       //
+      
       if(neuralNet){
-	lwt::ValueMap nnout = neuralNet->compute(matchedJet);
-	float DeepCSV_reCalc = nnout["probb"] + nnout["probbb"];
+	    lwt::ValueMap nnout = neuralNet->compute(matchedJet, true); //added true
+	    float DeepCSV_reCalc = nnout["probb"] + nnout["probbb"]; //first call to DeepCSV_recalc
         matchedJet->DeepCSV_reCalc = DeepCSV_reCalc;
-	
-	if(fabs(DeepCSV_reCalc - matchedJet->DeepCSV) > 0.001){
-	  cout << "Event: " << event->event << endl;
-	  cout << "DeepCSV_reCalc: " << DeepCSV_reCalc << " vs " << matchedJet->DeepCSV << endl;
-	  nnout = neuralNet->compute(matchedJet, true);
-	}
+	    
+        //cout << "inside neuralNet check before cut" << endl;
+        //cout << "probb: "<< nnout["probb"] << "  probbb: " << nnout["probbb"] << endl;
+
+
+	    if(fabs(DeepCSV_reCalc - matchedJet->DeepCSV) > 0.001){
+	        cout << "Event: " << event->event << endl;
+	        cout << "DeepCSV_reCalc: " << DeepCSV_reCalc << " vs " << matchedJet->DeepCSV << endl;
+      
+            //print out probb and probbb from nnout
+            cout << "probb: "<< nnout["probb"] << "  probbb: " << nnout["probbb"] << endl<<endl;
+	        nnout = neuralNet->compute(matchedJet, true);
+	    }
       }
 
 
@@ -1109,6 +1132,10 @@ void BTagAnalysis::PFJetAnalysis(const nTupleAnalysis::jetPtr& offJet,const nTup
   //
   hOffJets_matched->Fill(offJet,weight);
   hOffJets_matchedJet->Fill(hltJet,weight);
+  //
+  //
+  
+  
 
   //
   // Offline Btaggs
@@ -1148,19 +1175,42 @@ void BTagAnalysis::PFJetAnalysis(const nTupleAnalysis::jetPtr& offJet,const nTup
     hOffJet_matchedPFDeepcsvTagJet->Fill(hltJet, weight);
   }
 
-  
+  cout<<"isMC: "<<isMC<<endl;
+  cout<<endl;
   if(isMC){
     if(offJet->hadronFlavour == 5){
       hOffJets_matched_B->Fill(offJet, weight);
       hOffJets_matchedJet_B->Fill(hltJet, weight);
-    }else if(offJet->hadronFlavour == 4){
+      
+      //FIXME plot b goes in this region
+      /*if (offComp==true){
+        
+        if(hltJet->DeepCSV <0 && offJet->DeepCSV >0.3){
+          hOffJets_matchedJet_B_comp_bad->Fill(hltJet, weight);
+          hOffJets_matched_B_comp_bad->Fill(offJet, weight);
+        }
+        
+        if(hltJet->DeepCSV >0.3 && offJet->DeepCSV >0.3){
+          hOffJets_matchedJet_B_comp_good->Fill(hltJet, weight);
+          hOffJets_matched_B_comp_good->Fill(offJet, weight);
+        }
+      }*/
+    
+    }
+    else if(offJet->hadronFlavour == 4){
       hOffJets_matched_C->Fill(offJet, weight);
       hOffJets_matchedJet_C->Fill(hltJet, weight);
-    }else if(offJet->hadronFlavour == 0){
+    }
+    else if(offJet->hadronFlavour == 0){
       hOffJets_matched_L->Fill(offJet, weight);
       hOffJets_matchedJet_L->Fill(hltJet, weight);
     }
   }
+
+  /*if(offJet->DeepCSV > -1 && hltJet->DeepCSV <-1){ //FIXME fill plot
+    hPfJets_matched_comp->Fill(hltJet,offJet);
+    //Fill(
+  }*/
 
 
   return;

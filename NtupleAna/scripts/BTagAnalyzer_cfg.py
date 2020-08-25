@@ -28,6 +28,8 @@ parser.add_option(      '--histogramming',        dest="histogramming", default=
 parser.add_option(      '--skipEvents',        dest="skipEvents", default="0", help="")
 parser.add_option(      '--nnConfig',        default=None, help="")
 parser.add_option(      '--histFile',             dest="histFile",      default="hists.root", help="name of ouptut histogram file")
+#parser.add_option('--offComp',        dest="offComp", action="store_true",   default=False)
+
 o, a = parser.parse_args()
 
 
@@ -151,6 +153,7 @@ process.BTagAnalyzer = cms.PSet(
     debug   = cms.bool(o.debug),
     fileNamesAOD   = cms.vstring(fileNamesAOD),
     isMC    = cms.bool(o.isMC),
+    #offComp = cms.bool(o.offComp),
     isTurnOnStudy    = cms.bool(o.isTurnOnStudy),
     doLeptonSel      = cms.bool(o.doLeptonSel),
     year    = cms.string(o.year),

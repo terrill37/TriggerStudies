@@ -35,12 +35,14 @@ namespace TriggerStudies {
     bool debug = false;
     std::string year;
     bool isMC  = false;
+    //bool offComp = false;
     TFileDirectory dir;
 
     bool doTracks = true;
     bool doCaloJets = true;
     bool doLeptonSel = false;
-    
+    //bool offComp = false;
+
     int histogramming = 1e6;
     int treeEvents;
     eventData* event;
@@ -64,6 +66,7 @@ namespace TriggerStudies {
     nTupleAnalysis::jetHists* hOffJets_matchedCalo;
     nTupleAnalysis::jetHists* hOffJets_matchedCaloJet;
 
+    nTupleAnalysis::jetHists* hOffJets_matchedJet_comp;
 
     nTupleAnalysis::jetHists*    hOffJet_matchedPFcsvTag         ;
     nTupleAnalysis::jetHists*    hOffJet_matchedPFcsvTagJet      ;
@@ -107,7 +110,14 @@ namespace TriggerStudies {
     nTupleAnalysis::jetHists*  hOffJets_matchedJet_C;
     nTupleAnalysis::jetHists*  hOffJets_matchedCalo_C;
     nTupleAnalysis::jetHists*  hOffJets_matchedCaloJet_C;
-
+    
+    nTupleAnalysis::jetHists*  hPfJets_matched_comp; //FIXME new plot
+    
+    nTupleAnalysis::jetHists*  hOffJets_matchedJet_B_comp_good;
+    nTupleAnalysis::jetHists*  hOffJets_matchedJet_B_comp_bad;
+    
+    nTupleAnalysis::jetHists*  hOffJets_matched_B_comp_good;
+    nTupleAnalysis::jetHists*  hOffJets_matched_B_comp_bad;
 
     nTupleAnalysis::jetHists* hPfJets;
     nTupleAnalysis::jetHists* hPfJets_matched;

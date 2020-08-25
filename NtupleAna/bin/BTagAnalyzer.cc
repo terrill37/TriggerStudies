@@ -59,6 +59,7 @@ int main(int argc, char * argv[]){
   const edm::ParameterSet& parameters = process.getParameter<edm::ParameterSet>("BTagAnalyzer");
   bool debug = parameters.getParameter<bool>("debug");
   bool isMC  = parameters.getParameter<bool>("isMC");
+  //bool offComp = parameters.getParameter<bool>("offComp");
   bool isTurnOnStudy  = parameters.getParameter<bool>("isTurnOnStudy");
   bool doLeptonSel = parameters.getParameter<bool>("doLeptonSel");
   int histogramming = parameters.getParameter<int>("histogramming");
