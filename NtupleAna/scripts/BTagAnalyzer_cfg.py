@@ -28,7 +28,7 @@ parser.add_option(      '--histogramming',        dest="histogramming", default=
 parser.add_option(      '--skipEvents',        dest="skipEvents", default="0", help="")
 parser.add_option(      '--nnConfig',        default=None, help="")
 parser.add_option(      '--histFile',             dest="histFile",      default="hists.root", help="name of ouptut histogram file")
-#parser.add_option('--offComp',        dest="offComp", action="store_true",   default=False)
+parser.add_option('--offComp',        dest="offComp", action="store_true",   default=False)
 
 o, a = parser.parse_args()
 
@@ -152,12 +152,12 @@ else:
 
 
 #Setup event loop object
-<<<<<<< HEAD
+#<<<<<<< HEAD
 process.BTagAnalyzer = cms.PSet(
     debug   = cms.bool(o.debug),
     fileNamesAOD   = cms.vstring(fileNamesAOD),
     isMC    = cms.bool(o.isMC),
-    #offComp = cms.bool(o.offComp),
+    offComp = cms.bool(o.offComp),
     isTurnOnStudy    = cms.bool(o.isTurnOnStudy),
     doLeptonSel      = cms.bool(o.doLeptonSel),
     year    = cms.string(o.year),
@@ -168,7 +168,7 @@ process.BTagAnalyzer = cms.PSet(
     skipEvents = cms.int32(int(o.skipEvents)),
     )
 
-=======
+#=======
 if o.inputAOD is 'None':
     print('Configuring HLTOnly...')
     process.BTagAnalyzer = cms.PSet(
@@ -197,4 +197,4 @@ else:
         skipEvents = cms.int32(int(o.skipEvents)),
         )
     print('RAW+AOD configured')
->>>>>>> 3278138a3a97a451869d0798c01ece1fb04f0d86
+#>>>>>>> 3278138a3a97a451869d0798c01ece1fb04f0d86

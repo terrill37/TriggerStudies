@@ -35,7 +35,7 @@ namespace TriggerStudies {
     bool debug = false;
     std::string year;
     bool isMC  = false;
-    //bool offComp = false;
+    bool offComp = false;
     TFileDirectory dir;
 
     bool doTracks = true;
