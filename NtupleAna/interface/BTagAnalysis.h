@@ -100,6 +100,13 @@ namespace TriggerStudies {
 
     nTupleAnalysis::jetHists*  hOffJets_matched_L   ;
     nTupleAnalysis::jetHists*  hOffJets_matchedJet_L;
+    
+    //check for parton flavour plots
+    nTupleAnalysis::jetHists*  hOffJets_matchedJet_L_parton;
+    nTupleAnalysis::jetHists*  hOffJets_matchedJet_L_parton_clean;
+    nTupleAnalysis::jetHists*  hOffJets_matched_L_parton;
+    nTupleAnalysis::jetHists*  hOffJets_matched_L_parton_clean;
+
     nTupleAnalysis::jetHists*  hOffJets_matchedCalo_L;
     nTupleAnalysis::jetHists*  hOffJets_matchedCaloJet_L;
     nTupleAnalysis::jetHists*  hOffJets_matched_B   ;

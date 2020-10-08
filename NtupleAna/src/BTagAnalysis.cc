@@ -153,6 +153,12 @@ BTagAnalysis::BTagAnalysis(TChain* _eventsRAW, TChain* _eventsAOD, fwlite::TFile
   if(isMC){
     hOffJets_matched_L        = new nTupleAnalysis::jetHists("offJets_matched_L",       fs, "", jetDetailString);
     hOffJets_matchedJet_L     = new nTupleAnalysis::jetHists("offJets_matchedJet_L",    fs, "", jetDetailString);
+    
+    //check parton 
+    hOffJets_matched_L_parton        = new nTupleAnalysis::jetHists("offJets_matched_L_parton",       fs, "", jetDetailString);
+    hOffJets_matchedJet_L_parton     = new nTupleAnalysis::jetHists("offJets_matchedJet_L_parton",    fs, "", jetDetailString);
+    hOffJets_matched_L_parton_clean        = new nTupleAnalysis::jetHists("offJets_matched_L_parton_clean",       fs, "", jetDetailString);
+    hOffJets_matchedJet_L_parton_clean     = new nTupleAnalysis::jetHists("offJets_matchedJet_L_parton_clean",    fs, "", jetDetailString);
 
     hOffJets_matched_B        = new nTupleAnalysis::jetHists("offJets_matched_B",       fs, "", jetDetailString );
     hOffJets_matchedJet_B     = new nTupleAnalysis::jetHists("offJets_matchedJet_B",    fs, "", jetDetailString );
@@ -1214,12 +1220,12 @@ void BTagAnalysis::PFJetAnalysis(const nTupleAnalysis::jetPtr& offJet,const nTup
       //FIXME plot b goes in this region
       //if (offComp==true){
         
-      if(hltJet->DeepCSV <0 && offJet->DeepCSV >0.3){
+      if(hltJet->DeepCSV <0 && offJet->DeepCSV >0.1){
           hOffJets_matchedJet_B_comp_bad->Fill(hltJet, weight);
           hOffJets_matched_B_comp_bad->Fill(offJet, weight);
         }
         
-      if(hltJet->DeepCSV >0.3 && offJet->DeepCSV >0.3){
+      if(hltJet->DeepCSV >0.1 && offJet->DeepCSV >0.1){
           hOffJets_matchedJet_B_comp_good->Fill(hltJet, weight);
           hOffJets_matched_B_comp_good->Fill(offJet, weight);
         }
@@ -1236,8 +1242,18 @@ void BTagAnalysis::PFJetAnalysis(const nTupleAnalysis::jetPtr& offJet,const nTup
      // cout<<"pass light flavor: "<<endl;
       hOffJets_matched_L->Fill(offJet, weight);
       hOffJets_matchedJet_L->Fill(hltJet, weight);
+
+      if(offJet->partonFlavour != 0){
+        hOffJets_matched_L_parton->Fill(offJet, weight);
+        hOffJets_matchedJet_L_parton->Fill(hltJet, weight);
+      }
+
+      if(offJet->flavourCleaned != 0){
+        hOffJets_matched_L_parton_clean->Fill(offJet, weight);
+        hOffJets_matchedJet_L_parton_clean->Fill(hltJet, weight);
+      }
     }
-  }
+ } 
 
   /*if(offJet->DeepCSV > -1 && hltJet->DeepCSV <-1){ //FIXME fill plot
     hPfJets_matched_comp->Fill(hltJet,offJet);

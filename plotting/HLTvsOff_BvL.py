@@ -1,5 +1,5 @@
 import ROOT
-
+import time
 
 ROOT.gROOT.SetBatch(True)
 
@@ -11,7 +11,9 @@ p.add_option('--input',  type = 'string', default = "outBTag.FTKBtagging.ttbar.m
 p.add_option('--output', type = 'string', default = "makeRocCurves", dest = 'outDir', help = 'output dir' )
 p.add_option('--doCaloJets',  action="store_true",help = 'output dir' )
 p.add_option('--cmsText', type = 'string', default = "Work in Progress",  help = '' )
+p.add_option('--doComp', action='store_true', default=False, dest="doComp", help = 'for comparison of good')
 #p.add_option('--lumiText', default = "",  help = '' )
+
 (o,a) = p.parse_args()
 
 
@@ -37,6 +39,7 @@ maxDict = {"jetNSelectedTracks":20,
 
 
 def getHist(inFile,dir,var,binning,color):
+    print("in getHist")
     hist = inFile.Get(dir+"/"+var)
     print dir+"/"+var
     if type(binning ) == type(list()):
@@ -117,43 +120,103 @@ def getHist(inFile,dir,var,binning,color):
 
 
 def doVarRatio(var,binning,xTitle,setLogy=1,minX=None,maxX=None,minY=None):
+    ###start if else###
     if o.doCaloJets:
         offLF = getHist(inFile,"offJets_matchedCalo_L",          var,binning,ROOT.kBlack)
         hltLF = getHist(inFile,"offJets_matchedCaloJet_L",var,binning,ROOT.kBlack)
         offBQ = getHist(inFile,"offJets_matchedCalo_B",          var,binning,ROOT.kRed)
         hltBQ = getHist(inFile,"offJets_matchedCaloJet_B",var,binning,ROOT.kRed)
+
     else:
-        offLF = getHist(inFile,"offJets_matched_L",          var,binning,ROOT.kBlack)
-        hltLF = getHist(inFile,"offJets_matchedJet_L",var,binning,ROOT.kBlack)
+        #offLF = getHist(inFile,"offJets_matched_L",          var,binning,ROOT.kBlack)
+        #hltLF = getHist(inFile,"offJets_matchedJet_L",var,binning,ROOT.kBlack)
         offBQ = getHist(inFile,"offJets_matched_B",          var,binning,ROOT.kRed)
         hltBQ = getHist(inFile,"offJets_matchedJet_B",var,binning,ROOT.kRed)
+        if o.doComp:
+           # offLF = getHist(inFile,"offJets_matched_L",          var,binning,ROOT.kGreen)
+           # hltLF_good = getHist(inFile,"offJets_matchedJet_L_good",var,binning,ROOT.kGreen)
+            offBQ_good = getHist(inFile,"offJets_matched_B_good",          var,binning,ROOT.kBlue)
+            hltBQ_good = getHist(inFile,"offJets_matchedJet_B_good",var,binning,ROOT.kBlue)
+            offBQ_bad = getHist(inFile,"offJets_matched_B_bad",          var,binning,ROOT.kGreen)
+            hltBQ_bad = getHist(inFile,"offJets_matchedJet_B_bad",var,binning,ROOT.kGreen)
 
+        else:
+            offLF = getHist(inFile,"offJets_matched_L",          var,binning,ROOT.kBlack)
+            hltLF = getHist(inFile,"offJets_matchedJet_L",var,binning,ROOT.kBlack)
+    ###End if else###
+    
+    ###start if else###
+    if o.doComp:
+        maxY = max(offBQ.GetMaximum(), hltBQ.GetMaximum())
 
-    maxY = max(offLF.GetMaximum(),offBQ.GetMaximum(),
-               hltLF.GetMaximum(),hltBQ.GetMaximum())
-    if setLogy:
-        offLF.SetMaximum(4e0*maxY)
-        offLF.SetMinimum(1.01e-5)
     else:
-        offLF.SetMaximum(1.2*maxY)
+        maxY = max(offLF.GetMaximum(),offBQ.GetMaximum(),
+                   hltLF.GetMaximum(),hltBQ.GetMaximum())
+    ###End if else###
+    
+    ###start if else###
 
+    print("maxY: ", maxY)
+    print("set max min")
+    if setLogy:
+        if o.doComp:
+            offBQ.SetMaximum(4e0*maxY)
+            offBQ.SetMinimum(1.01e-5)
+        
+        else:
+            offLF.SetMaximum(4e0*maxY)
+            offLF.SetMinimum(1.01e-5)
+
+    else:
+        if o.doComp:
+            offBQ.SetMaximum(1.2*maxY)
+
+        else:
+            offLF.SetMaximum(1.2*maxY)
+    ###end if else###
+
+    ###if not###
     if not minY == None :
-        offLF.SetMinimum(minY)
+        if o.doComp:
+            offBQ.SetMinimum(minY)
+        else:
+            offLF.SetMinimum(minY)
+    ###end if not###
+    
+    ###start if else###
+    if o.doComp:
+        offBQ.GetYaxis().SetTitle("Simulated Tracks")
+        offBQ.GetXaxis().SetTitle(xTitle)
 
-
-    offLF.GetYaxis().SetTitle("Simulated Tracks")
-    offLF.GetXaxis().SetTitle(xTitle )
+    else:
+        offLF.GetYaxis().SetTitle("Simulated Tracks")
+        offLF.GetXaxis().SetTitle(xTitle )
+    ###end if else###
 
     if maxX:
-        offLF.GetXaxis().SetRangeUser(minX,maxX)
+        #offLF.GetXaxis().SetRangeUser(minX,maxX)
         offBQ.GetXaxis().SetRangeUser(minX,maxX)
-        hltLF.GetXaxis().SetRangeUser(minX,maxX)
+        #hltLF.GetXaxis().SetRangeUser(minX,maxX)
         hltBQ.GetXaxis().SetRangeUser(minX,maxX)
+        if o.doComp:
+            offBQ_bad.GetXaxis().SetRangeUser(minX,maxX)
+            offBQ_good.GetXaxis().SetRangeUser(minX,maxX)
+            hltBQ_bad.GetXaxis().SetRangeUser(minX,maxX)
+            hltBQ_good.GetXaxis().SetRangeUser(minX,maxX)
+        else:
+            offLF.GetXaxis().SetRangeUser(minX,maxX)
+            hltLF.GetXaxis().SetRangeUser(minX,maxX)
 
-
-    LFRatio = makeRatio(num = hltLF.Clone(),  den = offLF.Clone())
+    if not o.doComp:
+        LFRatio = makeRatio(num = hltLF.Clone(),  den = offLF.Clone())
+    
     BQRatio = makeRatio(num = hltBQ.Clone(),  den = offBQ.Clone())
-
+    
+    if o.doComp:
+        #LFRatio_good = makeRatio(num = hltLF_good.Clone(),  den = offLF_good.Clone())
+        BQRatio_good = makeRatio(num = hltBQ_good.Clone(),  den = offBQ_good.Clone())
+        BQRatio_bad = makeRatio(num = hltBQ_bad.Clone(), den = offBQ_bad.Clone())
+    
     xpos = 0.2
     ypos = 0.07
     xwidth = 0.7
@@ -161,11 +224,21 @@ def doVarRatio(var,binning,xTitle,setLogy=1,minX=None,maxX=None,minY=None):
     
     leg = ROOT.TLegend(xpos, ypos, xpos+xwidth, ypos+ywidth)
     leg.SetNColumns(2)
-    leg.AddEntry(offBQ,"Offline tracks b-quark jets","L")
-    leg.AddEntry(offLF,"Offline tracks light-flavor jets","L")
-    leg.AddEntry(hltBQ,"HLT tracks b-quark jets"    ,"PEL")
-    leg.AddEntry(hltLF,"HLT tracks light-flavor jets" ,"PEL")
-
+    #leg.AddEntry(offBQ,"Offline tracks b-quark jets","L")
+    #leg.AddEntry(offLF,"Offline tracks light-flavor jets","L")
+    #leg.AddEntry(hltBQ,"HLT tracks b-quark jets"    ,"PEL")
+    #leg.AddEntry(hltLF,"HLT tracks light-flavor jets" ,"PEL")
+    if o.doComp:
+        leg.AddEntry(offBQ_good,"Offline tracks b-quark jets good","L")
+        leg.AddEntry(offBQ_bad,"Offline tracks b-quark jets bad","L")
+        leg.AddEntry(hltBQ_good,"HLT tracks b-quark jets good"    ,"PEL")
+        leg.AddEntry(hltBQ_bad,"HLT tracks b-quark jets bad" ,"PEL")
+    else:
+        leg.AddEntry(offBQ,"Offline tracks b-quark jets","L")
+        leg.AddEntry(hltBQ,"HLT tracks b-quark jets","PEL")
+        leg.AddEntry(offLF,"Offline tracks light-flavor jets","L")
+        leg.AddEntry(hltLF,"HLT tracks light-flavor jets" ,"PEL")
+        
     canvas = makeCanvas(var, var, width=600, height=600)
     split=0.3
     top_pad    = ROOT.TPad("pad1", "The pad 80% of the height",0,split,1,1,0)
@@ -184,28 +257,45 @@ def doVarRatio(var,binning,xTitle,setLogy=1,minX=None,maxX=None,minY=None):
     top_pad.SetBorderSize(0)
 
     if var in maxDict.keys():
-        offLF.GetXaxis().SetRangeUser(offLF.GetXaxis().GetXmin(),maxDict[var] )
+        if o.doComp:
+            offBQ.GetXaxis().SetRangeUser(offBQ.GetXaxis().GetXmin(),maxDict[var])
+        else:
+            offLF.GetXaxis().SetRangeUser(offLF.GetXaxis().GetXmin(),maxDict[var] )
 
-    offLF.Draw("hist")
-    #hltLF.SetMarkerSize(0.75)
-    #hltLF.SetMarkerStyle(21)
-    hltLF.Draw("same pe")
-    offBQ.Draw("hist same")
-    #hltBQ.SetMarkerSize(0.75)
-    #hltBQ.SetMarkerStyle(21)
-    hltBQ.Draw("same pe")
+    
+    #offLF.Draw("hist")
+    ##hltLF.SetMarkerSize(0.75)
+    ##hltLF.SetMarkerStyle(21)
+    #hltLF.Draw("same pe")
+    #offBQ.Draw("hist same")
+    ##hltBQ.SetMarkerSize(0.75)
+    ##hltBQ.SetMarkerStyle(21)
+    #hltBQ.Draw("same pe")
+    
+    if o.doComp:
+        #offBQ.Draw("hist")
+        #hltBQ.Draw("same pe")
+        offBQ_bad.Draw("hist same")
+        hltBQ_bad.Draw("same pe")
+        offBQ_good.Draw("hist same")
+        hltBQ_good.Draw("same pe")
+    
+    else:
+        offLF.Draw("hist")
+        #hltLF.SetMarkerSize(0.75)
+        #hltLF.SetMarkerStyle(21)
+        hltLF.Draw("same pe")
+        offBQ.Draw("hist same")
+        #hltBQ.SetMarkerSize(0.75)
+        #hltBQ.SetMarkerStyle(21)
+        hltBQ.Draw("same pe")
+    
+
     leg.Draw("same")
-
-
-
-
-
 
     cmsLines = getCMSText(xStart=0.2,yStart=0.85,subtext=o.cmsText)
     for cmsl in cmsLines:
         cmsl.Draw("same")
-
-
 
     bottom_pad.cd()
     bottom_pad.SetTopMargin(2*axissep)
@@ -214,10 +304,14 @@ def doVarRatio(var,binning,xTitle,setLogy=1,minX=None,maxX=None,minY=None):
     bottom_pad.SetLeftMargin(canvas.GetLeftMargin());
     bottom_pad.SetFillStyle(0) # transparent
     bottom_pad.SetBorderSize(0)
-    ratio_axis = offLF.Clone()
+    if o.doComp:
+        ratio_axis = offBQ.Clone()
+        ratio_axis.GetXaxis().SetTitle(offBQ.GetXaxis().GetTitle())
+    else:
+        ratio_axis = offLF.Clone()
+        ratio_axis.GetXaxis().SetTitle(offLF.GetXaxis().GetTitle())
     #ratio_axis.GetYaxis().SetTitle("PF to Calo")
     ratio_axis.GetYaxis().SetTitle("HLT to Offline")
-    ratio_axis.GetXaxis().SetTitle(offLF.GetXaxis().GetTitle())
     ratio_axis.GetYaxis().SetNdivisions(507)
     rMin = 0
     rMax = 2
@@ -227,33 +321,62 @@ def doVarRatio(var,binning,xTitle,setLogy=1,minX=None,maxX=None,minY=None):
         LFRatio.GetXaxis().SetRangeUser(LFRatio.GetXaxis().GetXmin(),maxDict[var] )
 
     ratio_axis.GetYaxis().SetRangeUser(rMin, rMax)
-    LFRatio.GetYaxis().SetRangeUser(rMin, rMax)
+    if o.doComp:
+        BQRatio.GetYaxis().SetRangeUser(rMin, rMax)
+        BQRatio.GetYaxis().SetTitle("HLT to Offline")
+    else:
+        LFRatio.GetYaxis().SetRangeUser(rMin, rMax)
     #LFRatio.GetYaxis().SetTitle("Calo to Offline")
     #LFRatio.GetYaxis().SetTitle("PF to Calo")
-    LFRatio.GetYaxis().SetTitle("HLT to Offline")
+        LFRatio.GetYaxis().SetTitle("HLT to Offline")
 
+    if not o.doComp:
+        LFRatio.Draw("PE")
+        LFRatio.Draw("PE same")
+        oldSize = LFRatio.GetMarkerSize()
+        LFRatio.SetMarkerSize(0)
+        LFRatio.DrawCopy("same e0")
+        LFRatio.SetMarkerSize(oldSize)
+        LFRatio.Draw("PE same")
+    
+        BQRatio.Draw("PE same")
+        BQRatio.Draw("PE same")
+        oldSize = BQRatio.GetMarkerSize()
+        BQRatio.SetMarkerSize(0)
+        BQRatio.DrawCopy("same e0")
+        BQRatio.SetMarkerSize(oldSize)
+        BQRatio.Draw("PE same")
 
-    LFRatio.Draw("PE")
-    LFRatio.Draw("PE same")
-    oldSize = LFRatio.GetMarkerSize()
-    LFRatio.SetMarkerSize(0)
-    LFRatio.DrawCopy("same e0")
-    LFRatio.SetMarkerSize(oldSize)
-    LFRatio.Draw("PE same")
+    elif o.doComp:
+        BQRatio.Draw("PE")
+        BQRatio.Draw("PE same")
+        oldSize = BQRatio.GetMarkerSize()
+        BQRatio.SetMarkerSize(0)
+        BQRatio.DrawCopy("same e0")
+        BQRatio.SetMarkerSize(oldSize)
+        BQRatio.Draw("PE same")
 
-
-    BQRatio.Draw("PE same")
-    BQRatio.Draw("PE same")
-    oldSize = BQRatio.GetMarkerSize()
-    BQRatio.SetMarkerSize(0)
-    BQRatio.DrawCopy("same e0")
-    BQRatio.SetMarkerSize(oldSize)
-    BQRatio.Draw("PE same")
+        BQRatio_good.Draw("PE same")
+        BQRatio_good.Draw("PE same")
+        oldSize_good = BQRatio.GetMarkerSize()
+        BQRatio_good.SetMarkerSize(0)
+        BQRatio_good.DrawCopy("same e0")
+        BQRatio_good.SetMarkerSize(oldSize)
+        BQRatio_good.Draw("PE same")
+        
+        BQRatio_bad.Draw("PE same")
+        BQRatio_bad.Draw("PE same")
+        oldSize_bad = BQRatio.GetMarkerSize()
+        BQRatio_bad.SetMarkerSize(0)
+        BQRatio_bad.DrawCopy("same e0")
+        BQRatio_bad.SetMarkerSize(oldSize)
+        BQRatio_bad.Draw("PE same")
 
 
 
     line = ROOT.TLine()
-    line.DrawLine(offLF.GetXaxis().GetXmin(), 1.0, offLF.GetXaxis().GetXmax(), 1.0)
+    if not o.doComp: 
+        line.DrawLine(offLF.GetXaxis().GetXmin(), 1.0, offLF.GetXaxis().GetXmax(), 1.0)
 
     ndivs=[505,503]
 
@@ -315,10 +438,14 @@ def doVarRatio(var,binning,xTitle,setLogy=1,minX=None,maxX=None,minY=None):
     #watermarks = drawWaterMarks(wm)
 
     #varName = var.replace("tracks/","").replace("btags/","btags_")
+   
+    #print(o.outDir)
+    #time.sleep(10)
+
     varName = var.replace("tracks/","track_").replace("btags/","btag_").replace("btags_noV0/","btag_noV0_")
-    canvas.SaveAs(o.outDir+"/"+varName+".pdf")
+    canvas.SaveAs(o.outDir+'/'+varName+".pdf")
     #canvas.SaveAs(o.outDir+"/"+var+".eps")
-    #canvas.SaveAs(o.outDir+"/"+var+".png")
+    canvas.SaveAs(o.outDir+'/'+varName+".png")
 
 
 
