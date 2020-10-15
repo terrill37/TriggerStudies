@@ -81,6 +81,17 @@ def pair_PU200_noPU(pt_check, PU_check, inFile, infile_pt, PU_type):
     print("ERROR: Match Not Found for " + str(PU_type[i]) + " Pt " + str(pt_check))
     return "NONE","NONE"
 
+def normalize(hist1, hist2):
+    #normalize hists and return hists
+    if hist1.Integral():
+        hist1.Scale(1./hist1.Integral())
+
+    if hist2.Integral():
+        hist2.Scale(1./hist2.Integral())
+
+    return hist1, hist2
+
+
 def delta_z(inFile1, inFile2, infile_pt, PU_type1, PU_type2):
     print("Begin delta-z plotting...")
     print("Retrieving ttree ... ")
@@ -88,7 +99,7 @@ def delta_z(inFile1, inFile2, infile_pt, PU_type1, PU_type2):
     #direc_2 = "offJets_matchedJet_B_bad"
     
     path = "tracks/"
-    plots = ["dz_m", "dzError", "dz_l", "dzSig_l"]
+    plots = ["dz_s", "dz_m", "dzSig_m", "dzSig_s", "dzError", "dz_l", "dzSig_l"]
     
     for i, dz in enumerate(plots):
         h_name = direc+"/"+path+dz
@@ -135,6 +146,10 @@ def delta_z(inFile1, inFile2, infile_pt, PU_type1, PU_type2):
         
         #move to pad2 for ratio plot
         pad2.cd()
+        
+        print("Normalizing hists ...")
+        sleep(0.5)
+        hist1, hist2 = normalize(hist1, hist2)
 
         #set info for ratio
         hist3 = hist1.Clone("hist3")
@@ -154,12 +169,11 @@ def delta_z(inFile1, inFile2, infile_pt, PU_type1, PU_type2):
         #draw ratio plot hist3
         hist3.Draw("pe")
         
-        
-        #maxy = hist1.GetMaximum()
-        #hist1.GetYaxis().SetRangeUser(0, maxy + 0.1*maxy)
-        #hist1.SetMinimum(0.001)
+        maxy = hist1.GetMaximum()
+        hist1.GetYaxis().SetRangeUser(-0.02, maxy + 0.1*maxy)
+        hist1.SetMinimum(0.001)
 
-        can.SetLogy(0)
+        pad1.SetLogy(0)
         
         #return to pad1 for legend
         pad1.cd()
@@ -169,8 +183,8 @@ def delta_z(inFile1, inFile2, infile_pt, PU_type1, PU_type2):
         legend.SetLineWidth(0)
         legend.Draw("same")
 
-        can.SaveAs(o.outDir+"/tracks_"+dz+"_pt"+str(infile_pt).replace(".","p")+".png")
-        can.SaveAs(o.outDir+"/tracks_"+dz+"_pt"+str(infile_pt).replace(".","p")+".pdf")
+        can.SaveAs(o.outDir+"/tracks_"+dz+"_pt"+str(infile_pt).replace(".","p")+o.nameTag+".png")
+        can.SaveAs(o.outDir+"/tracks_"+dz+"_pt"+str(infile_pt).replace(".","p")+o.nameTag+".pdf")
         
         #close canvas before next iteration through loop
         can.Close()
