@@ -95,7 +95,8 @@ def normalize(hist1, hist2):
 def delta_z(inFile1, inFile2, infile_pt, PU_type1, PU_type2):
     print("Begin delta-z plotting...")
     print("Retrieving ttree ... ")
-    direc = "offJets_matchedJet_B"
+    direc = "offJets_matchedJet_B" #online jet
+ 
     #direc_2 = "offJets_matchedJet_B_bad"
     
     path = "tracks/"
@@ -120,11 +121,11 @@ def delta_z(inFile1, inFile2, infile_pt, PU_type1, PU_type2):
         hist1.SetFillColor(ROOT.kSpring)
         hist1.SetFillStyle(3003)
         
-        hist1.SetMinimum(0.000)
+        hist1.SetMinimum(0.00000000001)
         
         #set Pad1
         pad1 = TPad("pad1", "pad1", 0, 0.3, 1, 1.0)
-        pad1.SetBottomMargin(0) #joins upper and lower plot
+        pad1.SetBottomMargin(.01) #joins upper and lower plot
         pad1.Draw()
         
         can.cd() #return to main canvas before defining next pad
@@ -140,7 +141,8 @@ def delta_z(inFile1, inFile2, infile_pt, PU_type1, PU_type2):
         pad1.cd()
         hist1.Draw("h")
         hist2.Draw("same p")
-        
+        hist1.SetMinimum(0.0000001)
+
         hist1.GetXaxis().SetTitle(plots[i] + " [cm]")
         hist2.GetYaxis().SetTitle("dz/dzError")
         
@@ -170,10 +172,10 @@ def delta_z(inFile1, inFile2, infile_pt, PU_type1, PU_type2):
         hist3.Draw("pe")
         
         maxy = hist1.GetMaximum()
-        hist1.GetYaxis().SetRangeUser(-0.02, maxy + 0.1*maxy)
+        hist1.GetYaxis().SetRangeUser(0.00000000001, maxy + 0.1*maxy)
         hist1.SetMinimum(0.001)
 
-        pad1.SetLogy(0)
+        pad1.SetLogy(1)
         
         #return to pad1 for legend
         pad1.cd()

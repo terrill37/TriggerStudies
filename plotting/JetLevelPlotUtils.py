@@ -320,6 +320,7 @@ def drawComp(name,inputHists,yTitle,xTitle,outDir,otherText="",setLogy=1,yMax= 1
 
 
     canvas.SaveAs(outDir+"/"+name+".pdf")
+    canvas.SaveAs(outDir+"/"+name+".png")
 
 
 
@@ -864,22 +865,34 @@ def drawStackCompRatio(outName,dataInfo,MCInfo,yTitle,xTitle,rTitle,outDir,min=1
 
 
     canvas.SaveAs(outDir+"/"+outName+".pdf")
-
+    canvas.SaveAs(outDir+"/"+outName+".png")
 
 
 def makeStack(name,var,dir,binning,xTitle,rTitle,logy,inFileData,inFileMC,outDir,min=1,x_min=None,x_max=None,cmsText="",lumiText=""):
-    hist_Data    = getHist(inFileData, dir.replace("_X_","").replace("_X",""),      var, binning=binning,norm=0)
+    if inFileData != 'none':
+        hist_Data    = getHist(inFileData, dir.replace("_X_","").replace("_X",""),      var, binning=binning,norm=0)
     hist_B_MC    = getHist(inFileMC,   dir.replace("X","B"),      var, binning=binning,norm=0)
     hist_C_MC    = getHist(inFileMC,   dir.replace("X","C"),      var, binning=binning,norm=0)
     hist_L_MC    = getHist(inFileMC,   dir.replace("X","L"),      var, binning=binning,norm=0)
 
-
-    drawStackCompRatio(name,
+    if inFileData != 'none':
+        drawStackCompRatio(name,
                        (hist_Data,"Data"),
                        [(hist_L_MC,"Light Flavor",ROOT.kAzure-9),
                         (hist_C_MC,"Charm Jets",  ROOT.kGreen+1),
                         (hist_B_MC,"B Jets",      ROOT.kYellow)]
                        ,yTitle="Normalized",xTitle=xTitle,rTitle=rTitle,min=min,setLogy=logy,outDir=outDir,x_min=x_min,x_max=x_max,cmsText=cmsText,lumiText=lumiText)
+
+    else: 
+        hist_MC = getHist(inFileMC, "offJets_matchedPuppiJet", var,
+                            binning=binning, norm=0)
+        drawStackCompRatio(name,
+                           (hist_MC, "MC"),
+                           [(hist_L_MC,"Light Flavor",ROOT.kAzure-9),
+                            (hist_C_MC,"Charm Jets",  ROOT.kGreen+1),
+                            (hist_B_MC,"B Jets",      ROOT.kYellow)]
+                        , yTitle="Normalized",xTitle=xTitle,rTitle=rTitle,min=min,setLogy=logy,outDir=outDir,x_min=x_min,x_max=x_max,cmsText=cmsText,lumiText=lumiText)
+
 
 
 def getInverseTurnOn(name,var,dir,inFile,binning):
