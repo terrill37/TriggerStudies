@@ -15,7 +15,7 @@
 #include "TriggerStudies/NtupleAna/interface/eventData.h"
 #include "nTupleAnalysis/baseClasses/interface/cutflowHists.h"
 #include "nTupleAnalysis/baseClasses/interface/eventHists.h"
-
+#include "nTupleAnalysis/baseClasses/interface/triggers.h"
 
 
 
@@ -36,10 +36,13 @@ namespace TriggerStudies {
 
     nTupleAnalysis::eventHists* hEvents;
     nTupleAnalysis::cutflowHists* cutflow;
-
+    nTupleAnalysis::triggers* triggers;
+    
     //TH1F*   h4b_all          ;
     //TH1F*   h4b_L1          ;
     //TH1F*   h4b_HLTn          ;
+    //TH1F* triggers;
+    //triggers = dir.make<TH1F>("triggers", (name+"/triggers; ; Entries").c_str(), 1, 1, 2);
 
     //eventHists* allEvents   = NULL;
     //tagHists* passPreSel    = NULL;

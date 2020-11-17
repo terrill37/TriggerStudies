@@ -30,6 +30,10 @@ HH4bAnalysis::HH4bAnalysis(TChain* _eventsRAW, TChain* _eventsAOD, fwlite::TFile
   treeEvents = eventsRAW->GetEntries();
 
   cutflow    = new nTupleAnalysis::cutflowHists("cutflow", fs);
+  
+  triggers   = new nTupleAnalysis::triggers("trigger", fs);
+
+  
   cutflow->AddCut("all");
   cutflow->AddCut("foundMatch");
   //cutflow->AddCut("passMuonCut");
@@ -176,10 +180,26 @@ int HH4bAnalysis::processEvent(){
   float m4b = 1.0;//xx
   // Fill m4b
   //h4b_all->Fill(m4b);
+  
+  std::bitset<32> bset(event->BitTrigger[0]);
 
   cout << " Processing event " << endl;
   cout << " \T BitTrigger[0] " << event->BitTrigger[0] << endl;
-  cout << " \T BitTrigger[0] " << event->BitTrigger[1] << endl;
+  cout << " bit value: "       << bset << endl;
+  cout << " \T BitTrigger[1] " << event->BitTrigger[1] << endl;
+  
+  //iterate through bit trigger list
+  for(int i = 0; i < 2; i++){
+    //convert decimal into binary
+    std::bitset<32> bset(event->BitTrigger[i]);
+    
+    //iterate through list of binary values
+    for(long unsigned int j = 0; j < 32; j++){
+      if(bset[j]==1){
+        triggers -> Fill(j + 32*i);
+        }
+    }
+  }
 
   // L1 L1_PFHT330PT30_QuadPFPuppiJet_75_60_45_40_TriplePFPuppiBTagDeepCSV_2p4_v1
   //if(passTriggerBit(0,4)){
