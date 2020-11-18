@@ -16,6 +16,8 @@ using std::vector;  using std::map; using std::string; using std::set;
 
 
 HH4bAnalysis::HH4bAnalysis(TChain* _eventsRAW, TChain* _eventsAOD, fwlite::TFileService& fs, bool _debug){
+  
+  
   if(_debug) cout<<"In HH4bAnalysis constructor"<<endl;
   debug      = _debug;
 
@@ -31,16 +33,17 @@ HH4bAnalysis::HH4bAnalysis(TChain* _eventsRAW, TChain* _eventsAOD, fwlite::TFile
 
   cutflow    = new nTupleAnalysis::cutflowHists("cutflow", fs);
   
-  triggers   = new nTupleAnalysis::triggers("trigger", fs);
+  triggers     = new nTupleAnalysis::triggers("trigger", fs);
+  mass_preCut  = new nTupleAnalysis::mass("deepCSV_test", fs);
+  mass_postCut = new nTupleAnalysis::mass("deepCSV_test2", fs);
 
-  
   cutflow->AddCut("all");
   cutflow->AddCut("foundMatch");
   //cutflow->AddCut("passMuonCut");
   //cutflow->AddCut("passElecCut");
   //cutflow->AddCut("passLeptonCut");
-  //cutflow->AddCut("passNJetCut");
-  //cutflow->AddCut("passNBJetCut");
+  cutflow->AddCut("passNJetCut");
+  cutflow->AddCut("passNBJetCut");
 
 
 
@@ -57,6 +60,8 @@ HH4bAnalysis::HH4bAnalysis(TChain* _eventsRAW, TChain* _eventsAOD, fwlite::TFile
 
 
 void HH4bAnalysis::monitor(long int e){
+ 
+  
   //Monitor progress
   percent        = (e+1)*100/nEvents;
   duration       = ( std::clock() - start ) / (double) CLOCKS_PER_SEC;
@@ -118,6 +123,13 @@ int HH4bAnalysis::eventLoop(int maxEvents, int nSkipEvents){
 }
 
 int HH4bAnalysis::processEvent(){
+  //constants
+  float deepCSV_cut = 0.3;
+  float eta_cut     = 4.0;
+  float pt_cut      = 30 ;
+  //float phi_cut = 3.14 ;
+
+
   if(debug) cout << "processEvent start" << endl;
 
   cutflow->Fill("all", 1.0);
@@ -138,36 +150,72 @@ int HH4bAnalysis::processEvent(){
   if(debug) cout << "Count BTags " << endl;
   unsigned int nOffJetsForCut = 0;
   unsigned int nOffJetsTaggedForCut = 0;
+ 
   for(const nTupleAnalysis::jetPtr& offJet : event->offJets){
-
-    if(fabs(offJet->eta) > 4) continue;
-    if(offJet->pt       < 30)   continue; // 40 ? 
+    
+    if(fabs(offJet->eta) > eta_cut) continue;
+    if(offJet->pt       < pt_cut)       continue; // 40 ? 
 
     ++nOffJetsForCut;
-    if(offJet->DeepCSV > 0) ++nOffJetsTaggedForCut; // FIX ME OFFLINE BTAG CUT
+    
+    if(offJet->DeepCSV > deepCSV_cut) ++nOffJetsTaggedForCut; // FIXME OFFLINE BTAG CUT: BTagged pass
 
   }
+  float eventWeight = 1.0;
 
   //  
-  //if(nOffJetsForCut < 3      ){
-  //  if(debug) cout << "Fail NJet Cut" << endl;
-  //  return 0;
-  //}
-  //cutflow->Fill("passNJetCut", eventWeight);
-  //if(debug) cout << "Pass NJet Cut " << endl;
+  if(nOffJetsForCut < 3      ){
+    if(debug) cout << "Fail NJet Cut" << endl;
+    return 0;
+  }
 
-  //bool doOfflineBTagCut = false;
-  //if(doOfflineBTagCut){
-  //
-  //  if(nOffJetsTaggedForCut < 3) {
-  //    if(debug) cout << "Fail NBJet Cut" << endl;
-  //    return 0;
-  //  }
+  else{
+    for(const nTupleAnalysis::jetPtr& offJet : event->offJets){
+        mass_preCut -> Fill(offJet, eventWeight); //fill the deepCSV scores of the mass_preCut directory
+        
+        if(nOffJetsTaggedForCut >= 4){
+            mass_postCut -> Fill(offJet, eventWeight); //fill the deepCSV scores of the mass_postCut directory
+            }
+        }
+    }
+  
+  //cutflow->Fill("passNJetCut", eventWeight);
+  if(debug) cout << "Pass NJet Cut " << endl;
+
+  bool doOfflineBTagCut = true;
+  if(doOfflineBTagCut){
+  
+    if(nOffJetsTaggedForCut < 3) {
+      if(debug) cout << "Fail NBJet Cut" << endl;
+      return 0;
+    }
   //  cutflow->Fill("passNBJetCut", eventWeight);
-  //}
+  }
 
   //if(debug) cout << "Pass NBJet Cut " << endl;
+  
+  if(nOffJetsForCut >= 4){          // at least four jets
+    if(nOffJetsTaggedForCut >=4){   // at least four btagged jets
+        if(debug) cout<<"pass 4 tagged"<<endl;
+        
+        float mass_post=0;            //variable storage of mass
+        TLorentzVector momentum_post; //four momentum of variable
+        int index = 1;                //index to check only four pass
+        for(const nTupleAnalysis::jetPtr& offJet : event->offJets){ //loop through jets in event
+          if(offJet->DeepCSV <= deepCSV_cut) continue; //checks that passes DeepCSV cut
+          
+          momentum_post += offJet->p;
+          if(debug) cout<<"index in mass loop"<<index;
+          if(index >= 4) break; // break loop after fourth jet added
 
+          if(debug) cout<<momentum_post(0)<<endl;
+         
+        }
+
+        mass_post = momentum_post.M();
+        mass_postCut->FillMass(mass_post);
+    }
+  }
 
 
   //
@@ -177,17 +225,17 @@ int HH4bAnalysis::processEvent(){
   //hEvents->Fill(event->offPVs.size(),  0.0, eventWeight);
 
   // Calculate m4b
-  float m4b = 1.0;//xx
+  //float m4b = 1.0;//xx
   // Fill m4b
   //h4b_all->Fill(m4b);
-  
-  std::bitset<32> bset(event->BitTrigger[0]);
+  if(debug){  
+    std::bitset<32> bset(event->BitTrigger[0]);
 
-  cout << " Processing event " << endl;
-  cout << " \T BitTrigger[0] " << event->BitTrigger[0] << endl;
-  cout << " bit value: "       << bset << endl;
-  cout << " \T BitTrigger[1] " << event->BitTrigger[1] << endl;
-  
+    cout << " Processing event " << endl;
+    cout << " \T BitTrigger[0] " << event->BitTrigger[0] << endl;
+    cout << " bit value: "       << bset << endl;
+    cout << " \T BitTrigger[1] " << event->BitTrigger[1] << endl;
+  }
   //iterate through bit trigger list
   for(int i = 0; i < 2; i++){
     //convert decimal into binary
@@ -197,6 +245,9 @@ int HH4bAnalysis::processEvent(){
     for(long unsigned int j = 0; j < 32; j++){
       if(bset[j]==1){
         triggers -> Fill(j + 32*i);
+        //if(std::bitset<32> (event->BitTrigger[0])[0] == 1){
+          //triggers_L1Cut -> Fill(j+32*i);
+        //}
         }
     }
   }

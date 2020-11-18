@@ -16,7 +16,7 @@
 #include "nTupleAnalysis/baseClasses/interface/cutflowHists.h"
 #include "nTupleAnalysis/baseClasses/interface/eventHists.h"
 #include "nTupleAnalysis/baseClasses/interface/triggers.h"
-
+#include "nTupleAnalysis/baseClasses/interface/mass.h"
 
 
 namespace TriggerStudies {
@@ -37,7 +37,10 @@ namespace TriggerStudies {
     nTupleAnalysis::eventHists* hEvents;
     nTupleAnalysis::cutflowHists* cutflow;
     nTupleAnalysis::triggers* triggers;
-   
+    //nTupleAnalysis::triggers* triggers_L1Cut;
+    nTupleAnalysis::mass* mass_preCut;
+    nTupleAnalysis::mass* mass_postCut;
+
     //test change for git
 
     //TH1F*   h4b_all          ;
