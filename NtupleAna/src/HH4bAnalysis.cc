@@ -34,8 +34,8 @@ HH4bAnalysis::HH4bAnalysis(TChain* _eventsRAW, TChain* _eventsAOD, fwlite::TFile
   cutflow    = new nTupleAnalysis::cutflowHists("cutflow", fs);
   
   triggers     = new nTupleAnalysis::triggers("trigger", fs);
-  mass_preCut  = new nTupleAnalysis::mass("deepCSV_test", fs);
-  mass_postCut = new nTupleAnalysis::mass("deepCSV_test2", fs);
+  mass_preCut  = new nTupleAnalysis::mass("deepCSV_noCut", fs);
+  mass_postCut = new nTupleAnalysis::mass("deepCSV_wCut", fs);
 
   cutflow->AddCut("all");
   cutflow->AddCut("foundMatch");
