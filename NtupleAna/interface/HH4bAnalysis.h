@@ -40,6 +40,8 @@ namespace TriggerStudies {
     //nTupleAnalysis::triggers* triggers_L1Cut;
     nTupleAnalysis::mass* mass_preCut;
     nTupleAnalysis::mass* mass_postCut;
+    nTupleAnalysis::mass* mass_trig1;
+    nTupleAnalysis::mass* mass_trig2;
 
     //test change for git
 

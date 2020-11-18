@@ -34,8 +34,10 @@ HH4bAnalysis::HH4bAnalysis(TChain* _eventsRAW, TChain* _eventsAOD, fwlite::TFile
   cutflow    = new nTupleAnalysis::cutflowHists("cutflow", fs);
   
   triggers     = new nTupleAnalysis::triggers("trigger", fs);
-  mass_preCut  = new nTupleAnalysis::mass("deepCSV_noCut", fs);
-  mass_postCut = new nTupleAnalysis::mass("deepCSV_wCut", fs);
+  mass_preCut  = new nTupleAnalysis::mass("L1_noDeepCSVCut", fs);
+  mass_postCut = new nTupleAnalysis::mass("L1_wDeepCSVCut", fs);
+  mass_trig1   = new nTupleAnalysis::mass("HLT_PFHT330PT30_QuadPFPuppiJet_75_60_45_40_2p4_v1",fs);
+  mass_trig2   = new nTupleAnalysis::mass("HLT_PFHT330PT30_QuadPFPuppiJet_75_60_45_40_TriplePFPuppiBTagDeepCSV0p5_2p4_v1",fs);
 
   cutflow->AddCut("all");
   cutflow->AddCut("foundMatch");
@@ -128,7 +130,17 @@ int HH4bAnalysis::processEvent(){
   float eta_cut     = 4.0;
   float pt_cut      = 30 ;
   //float phi_cut = 3.14 ;
+  
+  int bsetList[2][32];
+  for(int i =0; i<2 ; i++){
+    for(int j =0; j<32; j++){
+      bsetList[i][j] = std::bitset<32>(event->BitTrigger[i])[j];
+    }
+  }
 
+  int triggerBit_L1[2]= {0,0};
+  int triggerBit_1[2] = {1,19}; // {nBitTrigger, BitTrigger}
+  int triggerBit_2[2] = {0,18}; // {nBitTrigger, BitTrigger}
 
   if(debug) cout << "processEvent start" << endl;
 
@@ -147,6 +159,10 @@ int HH4bAnalysis::processEvent(){
   //
   //  Offline BTags
   //
+  
+  //check if L1 triggered  in event before continuing
+  if(bsetList[triggerBit_L1[0]][triggerBit_L1[1]] != 1) return 0;
+
   if(debug) cout << "Count BTags " << endl;
   unsigned int nOffJetsForCut = 0;
   unsigned int nOffJetsTaggedForCut = 0;
@@ -201,6 +217,12 @@ int HH4bAnalysis::processEvent(){
         float mass_post=0;            //variable storage of mass
         TLorentzVector momentum_post; //four momentum of variable
         int index = 1;                //index to check only four pass
+        
+        float massTrig1=0;
+        float massTrig2=0;
+        TLorentzVector momentum_trig1;
+        TLorentzVector momentum_trig2;
+
         for(const nTupleAnalysis::jetPtr& offJet : event->offJets){ //loop through jets in event
           if(offJet->DeepCSV <= deepCSV_cut) continue; //checks that passes DeepCSV cut
           
@@ -214,6 +236,44 @@ int HH4bAnalysis::processEvent(){
 
         mass_post = momentum_post.M();
         mass_postCut->FillMass(mass_post);
+        
+      
+        //int bitList[2][32] = {bset_0_array,bset_1_array};
+
+        //for first trigger
+        if(bsetList[triggerBit_1[0]][triggerBit_1[1]]==1){
+          for(const nTupleAnalysis::jetPtr& offJet : event->offJets){ //loop through jets in event
+            if(offJet->DeepCSV <= deepCSV_cut) continue; //checks that passes DeepCSV cut
+            
+            momentum_trig1 += offJet->p;
+            if(debug) cout<<"index in mass loop"<<index;
+            if(index >= 4) break; // break loop after fourth jet added
+
+            if(debug) cout<<momentum_trig1(0)<<endl;
+           
+          }
+          massTrig1 = momentum_trig1.M();
+          mass_trig1->FillMass(massTrig1);
+        }
+        
+        //for second trigger
+        if(bsetList[triggerBit_2[0]][triggerBit_2[1]]==1){
+          for(const nTupleAnalysis::jetPtr& offJet : event->offJets){ //loop through jets in event
+            if(offJet->DeepCSV <= deepCSV_cut) continue; //checks that passes DeepCSV cut
+            
+            momentum_trig2 += offJet->p;
+            if(debug) cout<<"index in mass loop"<<index;
+            if(index >= 4) break; // break loop after fourth jet added
+
+            if(debug) cout<<momentum_trig2(0)<<endl;
+           
+          }
+          massTrig2 = momentum_trig2.M();
+          mass_trig2->FillMass(massTrig2);
+        }
+
+
+
     }
   }
 
@@ -255,10 +315,10 @@ int HH4bAnalysis::processEvent(){
   // L1 L1_PFHT330PT30_QuadPFPuppiJet_75_60_45_40_TriplePFPuppiBTagDeepCSV_2p4_v1
   //if(passTriggerBit(0,4)){
   //   h4b_L1->Fill(m4b);    
-  // HLT_PFHT330PT30_QuadPFPuppiJet_75_60_45_40_2p4_v1
+  // HLT_PFHT330PT30_QuadPFPuppiJet_75_60_45_40_2p4_v1 # 1 19
   //  if(passTriggerBit(1,19)){
   //   h4b_HLT_noBTag->Fill(m4b);    
-  // HLT_PFHT330PT30_QuadPFPuppiJet_75_60_45_40_TriplePFPuppiBTagDeepCSV0p5_2p4_v1
+  // HLT_PFHT330PT30_QuadPFPuppiJet_75_60_45_40_TriplePFPuppiBTagDeepCSV0p5_2p4_v1 # 0 18
   //  if(passTriggerBit(1,19)){
   //   h4b_HLT_wBTag->Fill(m4b);    
   ///}
