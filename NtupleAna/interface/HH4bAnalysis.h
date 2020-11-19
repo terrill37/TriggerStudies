@@ -37,11 +37,15 @@ namespace TriggerStudies {
     nTupleAnalysis::eventHists* hEvents;
     nTupleAnalysis::cutflowHists* cutflow;
     nTupleAnalysis::triggers* triggers;
+    
     //nTupleAnalysis::triggers* triggers_L1Cut;
     nTupleAnalysis::mass* mass_preCut;
-    nTupleAnalysis::mass* mass_postCut;
-    nTupleAnalysis::mass* mass_trig1;
-    nTupleAnalysis::mass* mass_trig2;
+    nTupleAnalysis::mass* L1_noCut;
+    nTupleAnalysis::mass* L1_deepCut;
+    nTupleAnalysis::mass* trig1;
+    nTupleAnalysis::mass* trig2;
+    nTupleAnalysis::mass* deepCut_noL1;
+    nTupleAnalysis::mass* trig3;
 
     //test change for git
 

@@ -34,10 +34,14 @@ HH4bAnalysis::HH4bAnalysis(TChain* _eventsRAW, TChain* _eventsAOD, fwlite::TFile
   cutflow    = new nTupleAnalysis::cutflowHists("cutflow", fs);
   
   triggers     = new nTupleAnalysis::triggers("trigger", fs);
-  mass_preCut  = new nTupleAnalysis::mass("L1_noDeepCSVCut", fs);
-  mass_postCut = new nTupleAnalysis::mass("L1_wDeepCSVCut", fs);
-  mass_trig1   = new nTupleAnalysis::mass("HLT_PFHT330PT30_QuadPFPuppiJet_75_60_45_40_2p4_v1",fs);
-  mass_trig2   = new nTupleAnalysis::mass("HLT_PFHT330PT30_QuadPFPuppiJet_75_60_45_40_TriplePFPuppiBTagDeepCSV0p5_2p4_v1",fs);
+  
+  mass_preCut  = new nTupleAnalysis::mass("noCuts", fs);
+  L1_noCut   = new nTupleAnalysis::mass("L1_noDeepCSVCut", fs);
+  L1_deepCut = new nTupleAnalysis::mass("L1_wDeepCSVCut", fs);
+  trig1   = new nTupleAnalysis::mass("HLT_PFHT330PT30_QuadPFPuppiJet_75_60_45_40_2p4_v1",fs);
+  trig2   = new nTupleAnalysis::mass("HLT_PFHT330PT30_QuadPFPuppiJet_75_60_45_40_TriplePFPuppiBTagDeepCSV0p5_2p4_v1",fs);
+  deepCut_noL1 = new nTupleAnalysis::mass("deepCSV_noL1", fs);
+  trig3 = new nTupleAnalysis::mass("HLT_QuadPFPuppiJet_75_60_45_40_2p4_v1",fs);
 
   cutflow->AddCut("all");
   cutflow->AddCut("foundMatch");
@@ -129,7 +133,7 @@ int HH4bAnalysis::processEvent(){
   float deepCSV_cut = 0.3;
   float eta_cut     = 4.0;
   float pt_cut      = 30 ;
-  //float phi_cut = 3.14 ;
+  
   
   int bsetList[2][32];
   for(int i =0; i<2 ; i++){
@@ -138,9 +142,10 @@ int HH4bAnalysis::processEvent(){
     }
   }
 
-  int triggerBit_L1[2]= {0,0};
+  int triggerBit_L1[2]= {0,4};
   int triggerBit_1[2] = {1,19}; // {nBitTrigger, BitTrigger}
   int triggerBit_2[2] = {0,18}; // {nBitTrigger, BitTrigger}
+  int triggerBit_3[2] = {1,21};
 
   if(debug) cout << "processEvent start" << endl;
 
@@ -161,7 +166,7 @@ int HH4bAnalysis::processEvent(){
   //
   
   //check if L1 triggered  in event before continuing
-  if(bsetList[triggerBit_L1[0]][triggerBit_L1[1]] != 1) return 0;
+ // if(bsetList[triggerBit_L1[0]][triggerBit_L1[1]] != 1) return 0;
 
   if(debug) cout << "Count BTags " << endl;
   unsigned int nOffJetsForCut = 0;
@@ -184,18 +189,43 @@ int HH4bAnalysis::processEvent(){
     if(debug) cout << "Fail NJet Cut" << endl;
     return 0;
   }
-
+  
+  //fill deepCSV plots
   else{
     for(const nTupleAnalysis::jetPtr& offJet : event->offJets){
+        if(fabs(offJet->eta) > eta_cut) continue;
+        if(offJet->pt       < pt_cut)       continue; // 40 ? 
+
         mass_preCut -> Fill(offJet, eventWeight); //fill the deepCSV scores of the mass_preCut directory
-        
+        //four jet requirement
         if(nOffJetsTaggedForCut >= 4){
-            mass_postCut -> Fill(offJet, eventWeight); //fill the deepCSV scores of the mass_postCut directory
+            //pass only deepCSV cut
+            if(offJet->DeepCSV >= deepCSV_cut){
+                deepCut_noL1 ->Fill(offJet,eventWeight);              
+            }
+            
+            //Pass L1
+            if(bsetList[triggerBit_L1[0]][triggerBit_L1[1]] != 1) continue;
+            L1_noCut -> Fill(offJet, eventWeight);
+
+            // pass DeepCSV cut
+            if(offJet->DeepCSV < deepCSV_cut) continue;
+            L1_deepCut->Fill(offJet, eventWeight);
+
+            //first trigger
+            if(bsetList[triggerBit_1[0]][triggerBit_1[1]] ==1){
+              trig1 -> Fill(offJet, eventWeight);
+            }
+            //second trigger
+            if(bsetList[triggerBit_2[0]][triggerBit_2[1]] == 1){
+              trig2 -> Fill(offJet, eventWeight);
+            }
+            
             }
         }
     }
   
-  //cutflow->Fill("passNJetCut", eventWeight);
+  cutflow->Fill("passNJetCut", eventWeight);
   if(debug) cout << "Pass NJet Cut " << endl;
 
   bool doOfflineBTagCut = true;
@@ -205,7 +235,7 @@ int HH4bAnalysis::processEvent(){
       if(debug) cout << "Fail NBJet Cut" << endl;
       return 0;
     }
-  //  cutflow->Fill("passNBJetCut", eventWeight);
+    cutflow->Fill("passNBJetCut", eventWeight);
   }
 
   //if(debug) cout << "Pass NBJet Cut " << endl;
@@ -214,66 +244,165 @@ int HH4bAnalysis::processEvent(){
     if(nOffJetsTaggedForCut >=4){   // at least four btagged jets
         if(debug) cout<<"pass 4 tagged"<<endl;
         
-        float mass_post=0;            //variable storage of mass
-        TLorentzVector momentum_post; //four momentum of variable
-        int index = 1;                //index to check only four pass
+        float mass_L1_noCut=0;            //variable storage of mass
+        TLorentzVector momentum_L1_noCut; //four momentum of variable
         
-        float massTrig1=0;
-        float massTrig2=0;
+        float m_preCut=0;
+        TLorentzVector momentum_preCut;
+
+        float mass_L1_deepCut=0;
+        TLorentzVector momentum_L1_deepCut;
+
+        float mass_trig1 = 0;
         TLorentzVector momentum_trig1;
+
+        float mass_trig2 = 0;
         TLorentzVector momentum_trig2;
-
-        for(const nTupleAnalysis::jetPtr& offJet : event->offJets){ //loop through jets in event
-          if(offJet->DeepCSV <= deepCSV_cut) continue; //checks that passes DeepCSV cut
-          
-          momentum_post += offJet->p;
-          if(debug) cout<<"index in mass loop"<<index;
-          if(index >= 4) break; // break loop after fourth jet added
-
-          if(debug) cout<<momentum_post(0)<<endl;
-         
-        }
-
-        mass_post = momentum_post.M();
-        mass_postCut->FillMass(mass_post);
         
-      
-        //int bitList[2][32] = {bset_0_array,bset_1_array};
+        float mass_trig3 = 0;
+        TLorentzVector momentum_trig3;
 
-        //for first trigger
-        if(bsetList[triggerBit_1[0]][triggerBit_1[1]]==1){
-          for(const nTupleAnalysis::jetPtr& offJet : event->offJets){ //loop through jets in event
-            if(offJet->DeepCSV <= deepCSV_cut) continue; //checks that passes DeepCSV cut
-            
-            momentum_trig1 += offJet->p;
-            if(debug) cout<<"index in mass loop"<<index;
-            if(index >= 4) break; // break loop after fourth jet added
+        float mass_deepCut_noL1=0;
+        TLorentzVector momentum_deepCut_noL1;
 
-            if(debug) cout<<momentum_trig1(0)<<endl;
-           
-          }
-          massTrig1 = momentum_trig1.M();
-          mass_trig1->FillMass(massTrig1);
-        }
+        int index = 1; //index to check only four pass
         
-        //for second trigger
-        if(bsetList[triggerBit_2[0]][triggerBit_2[1]]==1){
-          for(const nTupleAnalysis::jetPtr& offJet : event->offJets){ //loop through jets in event
-            if(offJet->DeepCSV <= deepCSV_cut) continue; //checks that passes DeepCSV cut
-            
-            momentum_trig2 += offJet->p;
-            if(debug) cout<<"index in mass loop"<<index;
-            if(index >= 4) break; // break loop after fourth jet added
+        for(const nTupleAnalysis::jetPtr& offJet : event->offJets){
+            if(fabs(offJet->eta) > eta_cut) continue;
+            if(offJet->pt       < pt_cut)       continue; // 40 ? 
 
-            if(debug) cout<<momentum_trig2(0)<<endl;
-           
-          }
-          massTrig2 = momentum_trig2.M();
-          mass_trig2->FillMass(massTrig2);
+            momentum_preCut += offJet->p;
+            if(index >=4){
+                index=1;
+                m_preCut = momentum_preCut.M();
+                mass_preCut ->FillMass(m_preCut);
+                break;
+            }
+            index++;
         }
 
+        //deepCut_noL1
+        for(const nTupleAnalysis::jetPtr& offJet : event->offJets){
+            if(fabs(offJet->eta) > eta_cut) continue;
+            if(offJet->pt       < pt_cut)       continue; // 40 ? 
 
+            if(offJet->DeepCSV < deepCSV_cut) continue;
+            momentum_deepCut_noL1 += offJet->p;
+            if(index >=4){
+                index=1;
+                mass_deepCut_noL1 = momentum_deepCut_noL1.M();
+                deepCut_noL1->FillMass(mass_deepCut_noL1);
+                break;
+            }
+            index++;
+            
+        }
 
+        //L1_noCut
+        if(bsetList[triggerBit_L1[0]][triggerBit_L1[1]] == 1){
+            for(const nTupleAnalysis::jetPtr& offJet : event->offJets){
+              if(fabs(offJet->eta) > eta_cut) continue;
+              if(offJet->pt       < pt_cut)       continue; // 40 ? 
+
+              momentum_L1_noCut += offJet->p;
+              if(index>=4){
+                index=1;
+                mass_L1_noCut = momentum_L1_noCut.M();
+                L1_noCut ->FillMass(mass_L1_noCut);
+                break;
+              }
+              index++;
+            }
+        
+        
+            //L1_deepCut
+            for(const nTupleAnalysis::jetPtr& offJet : event->offJets){    
+                if(fabs(offJet->eta) > eta_cut) continue;
+                if(offJet->pt       < pt_cut)       continue; // 40 ? 
+
+                if(offJet->DeepCSV < deepCSV_cut) continue;
+                momentum_L1_deepCut += offJet->p;
+                if(index>=4){
+                    index=1;
+                    mass_L1_deepCut = momentum_L1_deepCut.M();
+                    L1_deepCut ->FillMass(mass_L1_deepCut);
+                    break;
+                  }
+                  index++;
+            }
+            
+            //trig1
+            if(bsetList[triggerBit_1[0]][triggerBit_1[1]]==1){
+                for(const nTupleAnalysis::jetPtr& offJet : event->offJets){
+                    if(fabs(offJet->eta) > eta_cut) continue;
+                    if(offJet->pt       < pt_cut)       continue; // 40 ? 
+
+                    if(offJet->DeepCSV < deepCSV_cut) continue;
+                    momentum_trig1 += offJet->p;
+                    if(index>=4){
+                        index =1;
+                        mass_trig1 = momentum_trig1.M();
+                        trig1 -> FillMass(mass_trig1);
+                        break;
+                    }
+                    index++;
+                }
+            }
+
+            //trig2
+            if(bsetList[triggerBit_2[0]][triggerBit_2[1]]==1){
+                for(const nTupleAnalysis::jetPtr& offJet : event->offJets){
+                    if(fabs(offJet->eta) > eta_cut) continue;
+                    if(offJet->pt       < pt_cut)       continue; // 40 ? 
+
+                    
+                    if(offJet->DeepCSV < deepCSV_cut) continue;
+                    momentum_trig2 += offJet->p;
+                    if(index>=4){
+                        index=1;
+                        mass_trig2 = momentum_trig2.M();
+                        trig2 -> FillMass(mass_trig2);
+                        break;
+                    }
+                    index++;
+                }
+            }
+            
+            //trig3
+            if(bsetList[triggerBit_3[0]][triggerBit_3[1]]==1){
+                for(const nTupleAnalysis::jetPtr& offJet : event->offJets){
+                    if(fabs(offJet->eta) > eta_cut) continue;
+                    if(offJet->pt       < pt_cut)       continue; // 40 ? 
+
+                    
+                    if(offJet->DeepCSV < deepCSV_cut) continue;
+                    momentum_trig3 += offJet->p;
+                    if(index>=4){
+                        index=1;
+                        mass_trig3 = momentum_trig3.M();
+                        trig3 -> FillMass(mass_trig3);
+                        break;
+                    }
+                    index++;
+                }
+            }
+
+        }
+   /*     m_preCut = momentum_preCut.M();
+        mass_preCut ->FillMass(m_preCut);
+
+        mass_L1_noCut = momentum_L1_noCut.M();
+        L1_noCut ->FillMass(mass_L1_noCut);
+        
+        mass_L1_deepCut = momentum_L1_deepCut.M();
+        L1_deepCut ->FillMass(mass_L1_deepCut);
+
+        mass_trig1 = momentum_trig1.M();
+        trig1 -> FillMass(mass_trig1);
+
+        mass_trig2 = momentum_trig2.M();
+        trig2 -> FillMass(mass_trig2);
+*/
     }
   }
 
@@ -292,9 +421,9 @@ int HH4bAnalysis::processEvent(){
     std::bitset<32> bset(event->BitTrigger[0]);
 
     cout << " Processing event " << endl;
-    cout << " \T BitTrigger[0] " << event->BitTrigger[0] << endl;
+    cout << " BitTrigger[0] " << event->BitTrigger[0] << endl;
     cout << " bit value: "       << bset << endl;
-    cout << " \T BitTrigger[1] " << event->BitTrigger[1] << endl;
+    cout << " BitTrigger[1] " << event->BitTrigger[1] << endl;
   }
   //iterate through bit trigger list
   for(int i = 0; i < 2; i++){
