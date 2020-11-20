@@ -129,6 +129,8 @@ int HH4bAnalysis::eventLoop(int maxEvents, int nSkipEvents){
 }
 
 int HH4bAnalysis::processEvent(){
+ // cout<<"event"<<endl;
+  
   //constants
   float deepCSV_cut = 0.3;
   float eta_cut     = 4.0;
@@ -158,7 +160,7 @@ int HH4bAnalysis::processEvent(){
     return 0;
 
   cutflow->Fill("foundMatch", 1.0);
-
+  //cout<<"event matched"<<endl;
 
 
   //
@@ -239,33 +241,82 @@ int HH4bAnalysis::processEvent(){
   }
 
   //if(debug) cout << "Pass NBJet Cut " << endl;
+  //Only Cut on L1 not DeepCSV
+  float mass_L1_noCut=0;            //variable storage of mass
+  TLorentzVector momentum_L1_noCut; //four momentum of variable
+  float Ht_L1_noCut=0;                //Ht values
+
+  //no cuts on Trigger or DeepCSV
+  float m_preCut=0;
+  TLorentzVector momentum_preCut;
+  float Ht_preCut=0;
   
+  //cuts on L1 and DeepCSV
+  float mass_L1_deepCut=0;
+  TLorentzVector momentum_L1_deepCut;
+  float Ht_L1_deepCut=0;
+  
+  //cuts on L1, DeepCSV and trigger 1
+  float mass_trig1 = 0;
+  TLorentzVector momentum_trig1;
+  float Ht_trig1=0;
+  
+  //cuts on L1, DeepCSV, and trigger 2
+  float mass_trig2 = 0;
+  TLorentzVector momentum_trig2;
+  float Ht_trig2=0;
+  
+  //cuts on L1, DeepCSV, and trigger 3
+  float mass_trig3 = 0;
+  TLorentzVector momentum_trig3;
+  float Ht_trig3=0;
+  
+  //cuts only on DeepCSV
+  float mass_deepCut_noL1=0;
+  TLorentzVector momentum_deepCut_noL1;
+  float Ht_deepCut_noL1=0;
+
+
   if(nOffJetsForCut >= 4){          // at least four jets
     if(nOffJetsTaggedForCut >=4){   // at least four btagged jets
         if(debug) cout<<"pass 4 tagged"<<endl;
         
+  /*      //Only Cut on L1 not DeepCSV
         float mass_L1_noCut=0;            //variable storage of mass
         TLorentzVector momentum_L1_noCut; //four momentum of variable
-        
+        float Ht_L1_noCut=0;                //Ht values
+
+        //no cuts on Trigger or DeepCSV
         float m_preCut=0;
         TLorentzVector momentum_preCut;
-
+        float Ht_preCut=0;
+        
+        //cuts on L1 and DeepCSV
         float mass_L1_deepCut=0;
         TLorentzVector momentum_L1_deepCut;
-
+        float Ht_L1_deepCut=0;
+        
+        //cuts on L1, DeepCSV and trigger 1
         float mass_trig1 = 0;
         TLorentzVector momentum_trig1;
-
+        float Ht_trig1=0;
+        
+        //cuts on L1, DeepCSV, and trigger 2
         float mass_trig2 = 0;
         TLorentzVector momentum_trig2;
+        float Ht_trig2=0;
         
+        //cuts on L1, DeepCSV, and trigger 3
         float mass_trig3 = 0;
         TLorentzVector momentum_trig3;
-
+        float Ht_trig3;
+        
+        //cuts only on DeepCSV
         float mass_deepCut_noL1=0;
         TLorentzVector momentum_deepCut_noL1;
-
-        int index = 1; //index to check only four pass
+        float Ht_deepCut_noL1=0;
+*/
+        int index = 1; //index to check only four pass; resets after each loop
         
         for(const nTupleAnalysis::jetPtr& offJet : event->offJets){
             if(fabs(offJet->eta) > eta_cut) continue;
@@ -332,6 +383,7 @@ int HH4bAnalysis::processEvent(){
             }
             
             //trig1
+            //cout<<"trigger mass bit: "<<bsetList[triggerBit_1[0]][triggerBit_1[1]]<<endl;
             if(bsetList[triggerBit_1[0]][triggerBit_1[1]]==1){
                 for(const nTupleAnalysis::jetPtr& offJet : event->offJets){
                     if(fabs(offJet->eta) > eta_cut) continue;
@@ -388,23 +440,71 @@ int HH4bAnalysis::processEvent(){
             }
 
         }
-   /*     m_preCut = momentum_preCut.M();
-        mass_preCut ->FillMass(m_preCut);
-
-        mass_L1_noCut = momentum_L1_noCut.M();
-        L1_noCut ->FillMass(mass_L1_noCut);
-        
-        mass_L1_deepCut = momentum_L1_deepCut.M();
-        L1_deepCut ->FillMass(mass_L1_deepCut);
-
-        mass_trig1 = momentum_trig1.M();
-        trig1 -> FillMass(mass_trig1);
-
-        mass_trig2 = momentum_trig2.M();
-        trig2 -> FillMass(mass_trig2);
-*/
+  
     }
   }
+    
+    //
+    //
+    //Ht filling section
+    //doesn't require index
+    //does require pt>ptCut
+    //
+
+    for(const nTupleAnalysis::jetPtr& offJet : event->offJets){
+        //if(fabs(offJet->eta) > eta_cut) continue;
+        //cut on pt
+        if(offJet->pt       < pt_cut)       continue; // 40 ? 
+        Ht_preCut += offJet->pt;
+
+        //cut on DeepCSV
+        if(offJet->DeepCSV < deepCSV_cut) continue;
+        Ht_deepCut_noL1 += offJet->pt;
+        
+        //Cut on L1
+        if(bsetList[triggerBit_L1[0]][triggerBit_L1[1]] != 1) continue;
+        Ht_L1_deepCut += offJet->pt;
+        
+        //cout<<"before triggers"<<endl;
+        //cout<<"trigger one bit: "<<bsetList[triggerBit_L1[0]][triggerBit_L1[1]]<<endl;
+        //trigger 1 cut
+        if(bsetList[triggerBit_1[0]][triggerBit_1[1]]==1){
+   //         cout<<"in trigger 1"<<endl;
+            Ht_trig1 += offJet->pt;
+        }
+
+        //trigger 2 cut
+        if(bsetList[triggerBit_2[0]][triggerBit_2[1]]==1){
+            Ht_trig2 += offJet->pt;
+        }
+
+        //trigger 3 cut
+        if(bsetList[triggerBit_1[0]][triggerBit_1[1]]==1){
+            Ht_trig3 += offJet->pt;
+        }
+
+    }
+    //Fill Ht's
+    if(Ht_preCut != 0){
+        mass_preCut -> FillHt(Ht_preCut);
+        }
+    if(Ht_deepCut_noL1 != 0){
+        deepCut_noL1-> FillHt(Ht_deepCut_noL1);
+        }
+    if(Ht_L1_deepCut!=0){
+        L1_deepCut  -> FillHt(Ht_L1_deepCut);
+        }
+    if(Ht_trig1!=0){
+        trig1       -> FillHt(Ht_trig1);
+    }
+    if(Ht_trig2!=0){
+        trig2       -> FillHt(Ht_trig2);
+    }
+    if(Ht_trig3!=0){
+        trig3       -> FillHt(Ht_trig3);
+    }
+   // }
+  //}
 
 
   //
