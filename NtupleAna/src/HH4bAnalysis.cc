@@ -242,31 +242,37 @@ int HH4bAnalysis::processEvent(){
   float m_preCut=0;                 //variable storage of mass
   TLorentzVector momentum_preCut;   //four momentum of variable
   float Ht_preCut=0;                //Ht values
-  
+  std::vector<float> pt_preCut;
+
   //cuts on L1 and DeepCSV
   float mass_L1_deepCut=0;
   TLorentzVector momentum_L1_deepCut;
   float Ht_L1_deepCut=0;
+  std::vector<float> pt_L1_deepCut;
   
   //cuts on L1, DeepCSV and trigger 1
   float mass_trig1 = 0;
   TLorentzVector momentum_trig1;
   float Ht_trig1=0;
+  std::vector<float> pt_trig1;
   
   //cuts on L1, DeepCSV, and trigger 2
   float mass_trig2 = 0;
   TLorentzVector momentum_trig2;
   float Ht_trig2=0;
+  std::vector<float> pt_trig2;
   
   //cuts on L1, DeepCSV, and trigger 3
   float mass_trig3 = 0;
   TLorentzVector momentum_trig3;
   float Ht_trig3=0;
+  std::vector<float> pt_trig3;
   
   //cuts only on DeepCSV
   float mass_deepCut_noL1=0;
   TLorentzVector momentum_deepCut_noL1;
   float Ht_deepCut_noL1=0;
+  std::vector<float> pt_deepCut_noL1;
 
 
   if(nOffJetsForCut >= 4){          // at least four jets
@@ -280,10 +286,12 @@ int HH4bAnalysis::processEvent(){
             if(offJet->pt       < pt_cut)       continue; // 40 ? 
 
             momentum_preCut += offJet->p;
+            pt_preCut.push_back(offJet->pt);
             if(index >=4){
                 index=1;
                 m_preCut = momentum_preCut.M();
                 mass_preCut ->FillMass(m_preCut);
+                mass_preCut ->Fillpts(pt_preCut);
                 break;
             }
             index++;
@@ -296,10 +304,12 @@ int HH4bAnalysis::processEvent(){
 
             if(offJet->DeepCSV < deepCSV_cut) continue;
             momentum_deepCut_noL1 += offJet->p;
+            pt_deepCut_noL1.push_back(offJet->pt);
             if(index >=4){
                 index=1;
                 mass_deepCut_noL1 = momentum_deepCut_noL1.M();
                 deepCut_noL1->FillMass(mass_deepCut_noL1);
+                deepCut_noL1->Fillpts(pt_deepCut_noL1);
                 break;
             }
             index++;
@@ -315,10 +325,12 @@ int HH4bAnalysis::processEvent(){
 
                 if(offJet->DeepCSV < deepCSV_cut) continue;
                 momentum_L1_deepCut += offJet->p;
+                pt_L1_deepCut.push_back(offJet->pt);
                 if(index>=4){
                     index=1;
                     mass_L1_deepCut = momentum_L1_deepCut.M();
                     L1_deepCut ->FillMass(mass_L1_deepCut);
+                    L1_deepCut ->Fillpts(pt_L1_deepCut);
                     break;
                   }
                   index++;
@@ -333,10 +345,12 @@ int HH4bAnalysis::processEvent(){
 
                     if(offJet->DeepCSV < deepCSV_cut) continue;
                     momentum_trig1 += offJet->p;
+                    pt_trig1.push_back(offJet->pt);
                     if(index>=4){
                         index =1;
                         mass_trig1 = momentum_trig1.M();
                         trig1 -> FillMass(mass_trig1);
+                        trig1 -> Fillpts(pt_trig1);
                         break;
                     }
                     index++;
@@ -352,10 +366,12 @@ int HH4bAnalysis::processEvent(){
                     
                     if(offJet->DeepCSV < deepCSV_cut) continue;
                     momentum_trig2 += offJet->p;
+                    pt_trig2.push_back(offJet->pt);
                     if(index>=4){
                         index=1;
                         mass_trig2 = momentum_trig2.M();
                         trig2 -> FillMass(mass_trig2);
+                        trig2 -> Fillpts(pt_trig2);
                         break;
                     }
                     index++;
@@ -371,10 +387,12 @@ int HH4bAnalysis::processEvent(){
                     
                     if(offJet->DeepCSV < deepCSV_cut) continue;
                     momentum_trig3 += offJet->p;
+                    pt_trig3.push_back(offJet->pt);
                     if(index>=4){
                         index=1;
                         mass_trig3 = momentum_trig3.M();
                         trig3 -> FillMass(mass_trig3);
+                        trig3 -> Fillpts(pt_trig3);
                         break;
                     }
                     index++;
