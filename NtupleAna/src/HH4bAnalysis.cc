@@ -143,7 +143,7 @@ int HH4bAnalysis::processEvent(){
 
   //initial pt for all events
   for(const nTupleAnalysis::jetPtr& offJet : event->offJets){
-    triggers -> FillPt_intial(offJet->pt);
+    triggers -> Fillpt_initial(offJet->pt);
     break;
   }
 
