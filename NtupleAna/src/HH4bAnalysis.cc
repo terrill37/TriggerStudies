@@ -135,7 +135,18 @@ int HH4bAnalysis::processEvent(){
   float eta_cut     = 4.0;
   float pt_cut      = 30 ;
   
-  
+  for(const nTupleAnalysis::jetPtr& offJet : event->offJets){
+    triggers -> Fillpt_all(offJet->pt);
+    if(offJet->pt < pt_cut) continue;
+    triggers -> Fillpt_cut(offJet->pt);
+  }
+
+  //initial pt for all events
+  for(const nTupleAnalysis::jetPtr& offJet : event->offJets){
+    triggers -> FillPt_intial(offJet->pt);
+    break;
+  }
+
   int bsetList[2][32];
   for(int i =0; i<2 ; i++){
     for(int j =0; j<32; j++){
