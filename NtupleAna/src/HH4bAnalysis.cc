@@ -37,13 +37,13 @@ HH4bAnalysis::HH4bAnalysis(TChain* _eventsRAW, TChain* _eventsAOD, fwlite::TFile
   
   mass_preCut  = new nTupleAnalysis::mass("noCuts", fs);
   
-  L1_untagged = new nTupleAnalysis::mass("L1_wDeepCSVCut", fs);
+  L1_untagged = new nTupleAnalysis::mass("L1_untagged", fs);
   trig1   = new nTupleAnalysis::mass("HLT_PFHT330PT30_QuadPFPuppiJet_75_60_45_40_2p4_v1",fs);
   trig2   = new nTupleAnalysis::mass("HLT_PFHT330PT30_QuadPFPuppiJet_75_60_45_40_TriplePFPuppiBTagDeepCSV0p5_2p4_v1",fs);
   trig3 = new nTupleAnalysis::mass("HLT_QuadPFPuppiJet_75_60_45_40_2p4_v1",fs);
 
-  deepCut_noL1 = new nTupleAnalysis::mass("tagged_deepCSV_noL1", fs);
-  L1_deepCut_tagged = new nTupleAnalysis::mass("tagged_L1_wDeepCSVCut", fs);
+  deepCut_noL1 = new nTupleAnalysis::mass("tagged_noL1", fs);
+  L1_deepCut_tagged = new nTupleAnalysis::mass("tagged_L1", fs);
   trig1_tagged   = new nTupleAnalysis::mass("tagged_HLT_PFHT330PT30_QuadPFPuppiJet_75_60_45_40_2p4_v1",fs);
   trig2_tagged   = new nTupleAnalysis::mass("tagged_HLT_PFHT330PT30_QuadPFPuppiJet_75_60_45_40_TriplePFPuppiBTagDeepCSV0p5_2p4_v1",fs);
     trig3_tagged = new nTupleAnalysis::mass("tagged_HLT_QuadPFPuppiJet_75_60_45_40_2p4_v1",fs);
@@ -322,7 +322,7 @@ int HH4bAnalysis::processEvent(){
   float mass_L1_untagged = 0;
   TLorentzVector momentum_L1_untagged;
   float Ht_L1_untagged = 0;
-  std::vector<float> pt_L1_deepCut_untagged;
+  std::vector<float> pt_L1_untagged;
   
   //cuts on L1 and trigger 1
   float mass_trig1 = 0;
@@ -366,8 +366,22 @@ int HH4bAnalysis::processEvent(){
 
       //L1_noCut
       if(bsetList[triggerBit_L1[0]][triggerBit_L1[1]] == 1){
-          //L1_deepCut
-          
+          //L1_untagged
+          for(const nTupleAnalysis::jetPtr& offJet : event->offJets){    
+              if(fabs(offJet->eta) > eta_cut) continue;
+              if(offJet->pt       < pt_cut)       continue; // 40 ? 
+
+              momentum_L1_untagged += offJet->p;
+              pt_L1_untagged.push_back(offJet->pt);
+              if(index>=4){
+                  index=1;
+                  mass_L1_untagged = momentum_L1_untagged.M();
+                  L1_untagged ->FillMass(mass_L1_untagged);
+                  L1_untagged ->Fillpts(pt_L1_untagged);
+                  break;
+                }
+                index++;
+          }
           //trig1
           //cout<<"trigger mass bit: "<<bsetList[triggerBit_1[0]][triggerBit_1[1]]<<endl;
           if(bsetList[triggerBit_1[0]][triggerBit_1[1]]==1){
@@ -525,7 +539,7 @@ int HH4bAnalysis::processEvent(){
                   
                   if(offJet->DeepCSV < deepCSV_cut) continue;
                   momentum_trig3_tagged += offJet->p;
-                  pt_trig3.push_back(offJet->pt);
+                  pt_trig3_tagged.push_back(offJet->pt);
                   if(index>=4){
                       index=1;
                       mass_trig3_tagged = momentum_trig3_tagged.M();
@@ -549,12 +563,42 @@ int HH4bAnalysis::processEvent(){
     //does require pt>ptCut
     //
     //
+  if(nOffJetsTaggedForCut >= 4){
+    for(const nTupleAnalysis::jetPtr& offJet : event->offJets){
+        if(fabs(offJet->eta) > eta_cut) continue;
+        if(offJet->pt       < pt_cut)       continue; 
+        
+        //cut on DeepCSV
+        if(offJet->DeepCSV < deepCSV_cut) continue;
+        Ht_deepCut_noL1 += offJet -> pt;
 
+        if(bsetList[triggerBit_L1[0]][triggerBit_L1[1]] != 1) continue;
+        Ht_L1_deepCut_tagged += offJet->pt;
+        
+        //trigger 1 cut
+        if(bsetList[triggerBit_1[0]][triggerBit_1[1]]==1){
+            Ht_trig1_tagged += offJet->pt;
+        }
+
+        //trigger 2 cut
+        if(bsetList[triggerBit_2[0]][triggerBit_2[1]]==1){
+            Ht_trig2_tagged += offJet->pt;
+        }
+
+        //trigger 3 cut
+        if(bsetList[triggerBit_3[0]][triggerBit_3[1]]==1){
+            Ht_trig3_tagged += offJet->pt;
+        }
+
+    }
+  }
+
+  if(nOffJetsForCut>=4){
     for(const nTupleAnalysis::jetPtr& offJet : event->offJets){
         //if(fabs(offJet->eta) > eta_cut) continue;
         //cut on pt
-        if(offJet->pt       < pt_cut)       continue; // 40 ? 
-        Ht_preCut += offJet->pt;
+        if(offJet->pt       < pt_cut)       continue; 
+        Ht_preCut += offJet->pt;                        //precuts should be moved to correspond withuntagged events
 
         //cut on DeepCSV
         if(offJet->DeepCSV < deepCSV_cut) continue;
@@ -580,6 +624,8 @@ int HH4bAnalysis::processEvent(){
         }
 
     }
+  }
+
     //Fill Ht's
     if(Ht_preCut != 0){
         mass_preCut -> FillHt(Ht_preCut);
@@ -587,18 +633,31 @@ int HH4bAnalysis::processEvent(){
     if(Ht_deepCut_noL1 != 0){
         deepCut_noL1-> FillHt(Ht_deepCut_noL1);
         }
-    if(Ht_L1_deepCut!=0){
-        L1_deepCut_tagged  -> FillHt(Ht_L1_deepCut);
+    if(Ht_L1_deepCut_tagged!=0){
+        L1_deepCut_tagged  -> FillHt(Ht_L1_deepCut_tagged);
+        }
+    if(Ht_trig1_tagged!=0){
+        trig1_tagged       -> FillHt(Ht_trig1_tagged);
+    }
+    if(Ht_trig2_tagged!=0){
+        trig2_tagged       -> FillHt(Ht_trig2_tagged);
+    }
+    if(Ht_trig3_tagged!=0){
+        trig3_tagged       -> FillHt(Ht_trig3_tagged);
+    }
+    if(Ht_L1_untagged!=0){
+        L1_untagged  -> FillHt(Ht_L1_untagged);
         }
     if(Ht_trig1!=0){
-        trig1_tagged       -> FillHt(Ht_trig1);
+        trig1       -> FillHt(Ht_trig1);
     }
-    if(Ht_trig2!=0){
-        trig2_tagged       -> FillHt(Ht_trig2);
+    if(Ht_trig2_tagged!=0){
+        trig2       -> FillHt(Ht_trig2);
     }
-    if(Ht_trig3!=0){
-        trig3_tagged       -> FillHt(Ht_trig3);
+    if(Ht_trig3_tagged!=0){
+        trig3       -> FillHt(Ht_trig3);
     }
+
    // }
   //}
 

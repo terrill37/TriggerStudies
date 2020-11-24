@@ -20,6 +20,8 @@ parser.add_option('-o', '--outputBase',           dest="outputBase",    default=
 parser.add_option('-n', '--nevents',              dest="nevents",       default="-1", help="Number of events to process. Default -1 for no limit.")
 parser.add_option(      '--skipEvents',        dest="skipEvents", default="0", help="")
 parser.add_option(      '--histFile',             dest="histFile",      default="hists.root", help="name of ouptut histogram file")
+parser.add_option('--triggers', dest="trigger_list", default="", action='append', type='string') 
+
 o, a = parser.parse_args()
 
 
