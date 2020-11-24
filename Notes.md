@@ -46,8 +46,8 @@ ROOT file has a bunch of directories which contain histograms
    - `offJetsTight_matchedPFJet` - PF jets matching an offline jets btagged with tight DeepCSV working point 
    - `offJetsMedium_matchedPFJet` - PF jets matching an offline jets btagged with medium DeepCSV working point 
    - `offJetsLoose_matchedPFJet` - PF jets matching an offline jets btagged with loose DeepCSV working point 
-   - `offJetsMedDeepCSV_matchedPFJet` - offline jets pass medium DeepCSV btag that are matched to a PF jet
-   - `offJetsMedDeepCSV_matchedPFDeepCSV` - offline jets pass medium DeepCSV btag that are matched to a online DeepCSV btagged PF jet
+   - `offJetsMedDeepCSV_matchedPFJet` - offline jets pass medium DeepCSV btag that are matched to a PF jet (includes offline cut)
+   - `offJetsMedDeepCSV_matchedPFDeepCSV` - offline jets pass medium DeepCSV btag that are matched to a online DeepCSV btagged PF jet (includes online and offline cut)
    - `offJetsMedDeepCSV_matchedPFCSV`  - offline jets pass medium DeepCSV btag that are matched to a online CSV btagged PF jet
    - `pfJets` - plots of all reconstructed HLT PF jets   
    - `pfJets_matched` - plots of all reconstructed HLT PF jets matched to an offline jet

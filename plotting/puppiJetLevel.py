@@ -28,6 +28,12 @@ eff_PuppiDeepCSV_MC   = makeEff("DeepCSV_l" ,
     ["offJets_matchedPuppiDeepcsvTag",  "offJets_matchedPuppi"]  ,
     inFileMC, binning=effBinning)
 
+#eff_PuppiDeepCSVJet_MC = makeEff("DeepCSV_l",
+#    ["offJets_matchedPuppiDeepcsvTagJet", "offJets_matchedPuppiJet"],
+#    inFileMC, binning=effBinning)
+#OnlineDeepCSVCutPuppi  = 0.17
+
+
 reveff_DeepCSV_MC = {}
 jetTypes = "Puppi"
 
@@ -44,25 +50,44 @@ drawComp("RevEff_DeepCSV_MC", [(reveff_DeepCSV_MC[jetTypes]["Loose"],  "Loose", 
          yTitle="Efficiency", xTitle="DeepCSV Value of Jets", otherText=""+jetTypes+" Jets(MC)", 
          outDir=o.outDir, cmsText="work in progress", lumiText="testing")
 
-drawComp("Eff_Puppi_DeepCSV_MC", [(eff_PuppiDeepCSV_MC, "MC", ROOT.kBlue),],
+drawComp("Eff_Puppi_DeepCSV_MC", [(eff_PuppiDeepCSV_MC, "matched", ROOT.kBlue),],
+ #                                 (eff_PuppiDeepCSVJet_MC, "matched Jet", ROOT.kRed),],
          yTitle="Efficiency", xTitle="DeepCSV Value of Puppi", otherText="MC Puppi",
-         outDir=o.outDir, cmsText="work in progress", lumiText="")
+         outDir=o.outDir, cmsText="DeepCSV Cut > 0.17", lumiText="")
 
 
 #
 # Eff_pt
+# pt > 30
 #
-eff_PuppiPt_MC = makeEff("pt_m", 
-                        ["offJets_matchedPuppi", "offJets_matchedPuppiJet"],
-                        inFileMC, binning=effBinning)
 
-print("eff pt passed")
+#cut on offline and online in numerator
+#cut on offline only in denominator
 
-drawComp("Eff_Puppi_pt_MC", [(eff_PuppiPt_MC, "MC", ROOT.kRed),],
-        yTitle="Efficiency", xTitle="Pt Value of Puppi", otherText="MC Puppi",
-        xMin=-0.1, xMax=500, yMax=1.,
-        outDir=o.outDir, cmsText="work in progress", lumiText="")
-
+#      [name,   xStartOther,yStartOther,units,xmin, xmax,cmsText]
+plots=[["pt_m", 200,        0.25,      '(GeV)',0,   500, 'pt<0.5'],
+       ["eta",  -2,         0.25,      '',    -5,   5,   ''],
+       ["phi",  -1,         0.25,      '',    -3.2, 3.2, ''],]
+       
+for i in range(0,len(plots)):
+    eff_Puppi_MC = makeEff(plots[i][0], 
+                            ["offJetsMedDeepCSV_matchedPuppiDeepCSV", 
+                            "offJetsMedDeepCSV_matchedPuppiJet"],
+                            inFileMC, binning=effBinning)
+    
+    #eff_PuppiJetPt_MC = makeEff("pt_m",
+    #                           ["offJets_matchedPuppiDeepcsvTagJet", "offJets_matchedPuppiJet"],
+    #                           inFileMC, binning=effBinning)
+    
+    print("eff pt passed")
+    
+    drawComp("Eff_Puppi_"+plots[i][0]+"_MC", [(eff_Puppi_MC, "matched", ROOT.kRed),],
+     #                            (eff_PuppiJetPt_MC, "matchedJet", ROOT.kBlue),],
+            yTitle="Efficiency", xTitle=plots[i][0]+" Value of Puppi "+plots[i][3],
+            otherText="#splitline{offline DeepCSV Medium cut (2017) > 0.4941}{online DeepCSV Cut > 0.17}",
+            xMin=plots[i][4], xMax=plots[i][5], yMax=1., xStartOther=plots[i][1], yStartOther=plots[i][2],
+            outDir=o.outDir, cmsText=plots[i][6], lumiText="")
+    
 
 #
 # Offline vs Online

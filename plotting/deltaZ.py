@@ -141,11 +141,14 @@ def delta_z(inFile1, inFile2, infile_pt, PU_type1, PU_type2):
         pad1.cd()
         hist1.Draw("h")
         hist2.Draw("same p")
-        hist1.SetMinimum(0.0000001)
+        #hist1.SetMinimum(0.01)
 
         hist1.GetXaxis().SetTitle(plots[i] + " [cm]")
         hist2.GetYaxis().SetTitle("dz/dzError")
         
+        if dz == "dz_l" or dz == "dz_m":
+            hist1.GetXaxis().SetRangeUser(-2.0, 2.0)
+
         #move to pad2 for ratio plot
         pad2.cd()
         
@@ -158,8 +161,6 @@ def delta_z(inFile1, inFile2, infile_pt, PU_type1, PU_type2):
         hist3.SetLineColor(4)
         hist3.SetMarkerStyle(21)
         
-        
-        
         hist3.Sumw2()
         hist3.SetStats(0)
         hist3.Divide(hist2)
@@ -168,12 +169,16 @@ def delta_z(inFile1, inFile2, infile_pt, PU_type1, PU_type2):
         hist3.SetMaximum(h3Max+0.1*h3Max)
         hist3.GetXaxis().SetTitle(plots[i] + " [cm] ")
         
+        if dz == "dz_l" or dz == "dz_m":
+            hist3.GetXaxis().SetRangeUser(-2.0, 2.0)
+            hist3.GetYaxis().SetRangeUser(-0.2*h3Max, h3Max+0.1*h3Max)
+ 
         #draw ratio plot hist3
         hist3.Draw("pe")
         
         maxy = hist1.GetMaximum()
-        hist1.GetYaxis().SetRangeUser(0.00000000001, maxy + 0.1*maxy)
-        hist1.SetMinimum(0.001)
+        #hist1.GetYaxis().SetRangeUser(0.00000000001, maxy + 0.1*maxy)
+        #hist1.SetMinimum(0.001)
 
         pad1.SetLogy(1)
         

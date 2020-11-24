@@ -157,9 +157,6 @@ def makeEff(var,dirs,inFile,binning,bayesRatio=1,histForXBarycenterCalc=None):
 
 def drawComp(name,inputHists,yTitle,xTitle,outDir,otherText="",setLogy=1,yMax= 1,leg="",xMax=1,xMin = -0.2,yLeg=0.76,xLeg=0.2,xStartOther=0.5, yStartOther=0.9, doFit = False,cmsText="Preliminary", lumiText="",xLumiStart=0.7):
 
-
-
-
     canvas = makeCanvas(name, name)#, width=800, height=600)
 
     if isinstance(inputHists[0][0],ROOT.TGraphAsymmErrors):
@@ -1072,24 +1069,17 @@ def makeInverseTurnOnAll(name,var,dir,inFile1,name1,inFile2,name2,binning, outDi
         wpLabel.SetTextSize(textsize)
         wpLabel.Draw("same")
 
-
-
-
     leg .Draw("same")
     leg2.Draw("same")
 
     if otherText:
         
-        xStartOther=0.4
+        xStartOther=0.5
         yStartOther=1.1
         textsize=0.05
         otherLabel = ROOT.TLatex(xStartOther, yStartOther, '#scale['+str(0.7)+']{'+otherText+'}')
         otherLabel.SetTextSize(textsize)
-        otherLabel.Draw("same")
-
-        
-        
-
+        otherLabel.Draw("same") 
 
     can.SaveAs(outDir+"/"+name+".pdf")
 
