@@ -41,10 +41,19 @@ namespace TriggerStudies {
     //nTupleAnalysis::triggers* triggers_L1Cut;
     nTupleAnalysis::mass* mass_preCut;
     nTupleAnalysis::mass* deepCut_noL1; 
-    nTupleAnalysis::mass* L1_deepCut;
+    
+    nTupleAnalysis::mass* L1_untagged;
     nTupleAnalysis::mass* trig1;
     nTupleAnalysis::mass* trig2;  
     nTupleAnalysis::mass* trig3;
+
+    //Tagged Jets
+    nTupleAnalysis::mass* deepCut_noL1_tagged; 
+    nTupleAnalysis::mass* L1_deepCut_tagged;
+    nTupleAnalysis::mass* trig1_tagged;
+    nTupleAnalysis::mass* trig2_tagged;  
+    nTupleAnalysis::mass* trig3_tagged;
+
 
     //test change for git
 
