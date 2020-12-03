@@ -567,6 +567,8 @@ int HH4bAnalysis::processEvent(){
     //does require pt>ptCut
     //
     //
+  
+  //tagged filling
   if(nOffJetsTaggedForCut >= 4){
     for(const nTupleAnalysis::jetPtr& offJet : event->offJets){
         if(fabs(offJet->eta) > eta_cut) continue;
@@ -596,35 +598,36 @@ int HH4bAnalysis::processEvent(){
 
     }
   }
-
+  
+  //untagged filling
   if(nOffJetsForCut>=4){
     for(const nTupleAnalysis::jetPtr& offJet : event->offJets){
         //if(fabs(offJet->eta) > eta_cut) continue;
         //cut on pt
         if(offJet->pt       < pt_cut)       continue; 
-        Ht_preCut += offJet->pt;                        //precuts should be moved to correspond withuntagged events
+        Ht_preCut += offJet->pt;                        //precuts should be moved to correspond with untagged events
 
         //cut on DeepCSV
-        if(offJet->DeepCSV < deepCSV_cut) continue;
-        Ht_deepCut_noL1 += offJet->pt;
+        //if(offJet->DeepCSV < deepCSV_cut) continue;
+        //Ht_deepCut_noL1 += offJet->pt;
         
         //Cut on L1
         if(bsetList[triggerBit_L1[0]][triggerBit_L1[1]] != 1) continue;
-        Ht_L1_deepCut_tagged += offJet->pt;
+        Ht_L1_untagged += offJet->pt;
         
         //trigger 1 cut
         if(bsetList[triggerBit_1[0]][triggerBit_1[1]]==1){
-            Ht_trig1_tagged += offJet->pt;
+            Ht_trig1 += offJet->pt;
         }
 
         //trigger 2 cut
         if(bsetList[triggerBit_2[0]][triggerBit_2[1]]==1){
-            Ht_trig2_tagged += offJet->pt;
+            Ht_trig2 += offJet->pt;
         }
 
         //trigger 3 cut
         if(bsetList[triggerBit_3[0]][triggerBit_3[1]]==1){
-            Ht_trig3_tagged += offJet->pt;
+            Ht_trig3 += offJet->pt;
         }
 
     }

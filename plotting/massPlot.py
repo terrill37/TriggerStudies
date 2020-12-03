@@ -65,9 +65,9 @@ for i in range(0, len(plots)):
     no_cuts = 'noCuts'
     L1_wDeepCSVCut = 'tagged_L1'
     deepCSV_noL1 = 'tagged_noL1'
-    trig1 = 'tagged_HLT_PFHT330PT30_QuadPFPuppiJet_75_60_45_40_2p4_v1'
-    trig2 = 'tagged_HLT_PFHT330PT30_QuadPFPuppiJet_75_60_45_40_TriplePFPuppiBTagDeepCSV0p5_2p4_v1'
-    trig3 = 'tagged_HLT_QuadPFPuppiJet_75_60_45_40_2p4_v1'
+    trig2 = 'tagged_HLT_PFHT330PT30_QuadPFPuppiJet_75_60_45_40_2p4_v1'
+    trig3 = 'tagged_HLT_PFHT330PT30_QuadPFPuppiJet_75_60_45_40_TriplePFPuppiBTagDeepCSV0p5_2p4_v1'
+    trig1 = 'tagged_HLT_QuadPFPuppiJet_75_60_45_40_2p4_v1'
     
     hist2 = inFileMC.Get(L1_wDeepCSVCut+'/'+plots[i])
     hist= inFileMC.Get(deepCSV_noL1+'/'+plots[i])
@@ -106,9 +106,9 @@ for i in range(0, len(plots)):
     leg.SetTextSize(0.035)
     leg.AddEntry(hist, 'no trigger', 'L')
     leg.AddEntry(hist2, 'L1 trigger', 'L')
-    leg.AddEntry(hist3, 'QuadPFPuppiJet', 'L')
-    leg.AddEntry(hist4, 'TriplePFPuppiBTagDeepCSV', 'L')
-    leg.AddEntry(hist5, 'Quad Only', 'L')
+    leg.AddEntry(hist3, 'Quad', 'L')
+    leg.AddEntry(hist4, 'Ht', 'L')
+    leg.AddEntry(hist5, 'triplePuppi', 'L')
     leg.Draw('same')
     
     can.SaveAs(o.outDir+'/'+plots[i]+'.png')
@@ -173,5 +173,56 @@ drawComp("pt_ratio_Quad_Only", effs_all,
          xMin=-0.2, xMax = 1000, yMax = 1.2, xStartOther=600, yStartOther=0.3,
          outDir=o.outDir, cmsText="preliminary", lumiText="Quad Only")
 
+
+L1_untagged = 'L1_untagged'
+trig1_untagged = 'HLT_QuadPFPuppiJet_75_60_45_40_2p4_v1'
+trig2_untagged = 'HLT_PFHT330PT30_QuadPFPuppiJet_75_60_45_40_2p4_v1'
+trig3_untagged = 'HLT_PFHT330PT30_QuadPFPuppiJet_75_60_45_40_TriplePFPuppiBTagDeepCSV0p5_2p4_v1'
+
+#hist= inFileMC.Get(deepCSV_noL1+'/'+plots[i])
+hist2= inFileMC.Get(L1_untagged +'/Ht')
+hist3= inFileMC.Get(trig1_untagged+'/Ht')
+hist4= inFileMC.Get(trig2_untagged+'/Ht')
+hist5= inFileMC.Get(trig3_untagged+'/Ht')
+
+can.cd()
+#hist.SetLineColor(ROOT.kBlack)
+#hist.SetMarkerColor(ROOT.kBlack)
+
+hist2.SetLineColor(ROOT.kBlue)
+hist2.SetMarkerColor(ROOT.kBlue)
+
+hist3.SetLineColor(ROOT.kRed)
+hist3.SetMarkerColor(ROOT.kRed)
+
+hist4.SetLineColor(ROOT.kGreen)
+hist4.SetMarkerColor(ROOT.kGreen)
+
+hist5.SetLineColor(ROOT.kMagenta)
+hist5.SetMarkerColor(ROOT.kMagenta)
+
+#hist.Draw()
+hist2.Draw('')
+hist3.Draw('same')
+hist4.Draw('same')
+hist5.Draw('same')
+
+hist.GetYaxis().SetTitle("Entries")
+hist.GetXaxis().SetTitle("Ht (GeV)")
+
+leg = ROOT.TLegend(0.55, 0.6, 0.85, 0.85)
+leg.SetBorderSize(0)
+leg.SetTextFont(42)
+leg.SetTextSize(0.035)
+#leg.AddEntry(hist, 'no trigger', 'L')
+leg.AddEntry(hist2, 'L1', 'L')
+leg.AddEntry(hist3, 'Quad', 'L')
+leg.AddEntry(hist4, 'Ht', 'L')
+leg.AddEntry(hist5, 'triplePuppi', 'L')
+leg.Draw('same')
+
+can.SaveAs(o.outDir+'/Ht_untagged.png')
+
+can.Clear()
 
 
