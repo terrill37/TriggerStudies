@@ -22,29 +22,29 @@ from JetLevelPlotUtils import makeEff, drawComp, getHist, drawStackCompRatio, ma
 #
 #  Offline Turnon curves:
 #
-effBinning = 10
+effBinning = 5
 plot_names = ["mass"]
 
 #["mass", "Ht", "pt_1",
 # "pt_2", "pt_3", "pt_4"]
 
 
-
+print("mass efficiency")
 for i in range(0,len(plot_names)):    
     eff_mass_wDeepCut   = makeEff(plot_names[i] , 
-        ["L1_wDeepCSVCut",  "deepCSV_noL1"]  ,
+        ["tagged_L1",  "tagged_noL1"]  ,
        inFileMC, binning=effBinning)
     
     eff_mass_trig1   = makeEff(plot_names[i] , 
-        ["HLT_PFHT330PT30_QuadPFPuppiJet_75_60_45_40_2p4_v1",  "deepCSV_noL1"]  ,
+        ["tagged_HLT_PFHT330PT30_QuadPFPuppiJet_75_60_45_40_2p4_v1",  "tagged_noL1"]  ,
         inFileMC, binning=effBinning)
     
     eff_mass_trig2   = makeEff(plot_names[i] , 
-        ["HLT_PFHT330PT30_QuadPFPuppiJet_75_60_45_40_TriplePFPuppiBTagDeepCSV0p5_2p4_v1",  "deepCSV_noL1"]  ,
+        ["tagged_HLT_PFHT330PT30_QuadPFPuppiJet_75_60_45_40_TriplePFPuppiBTagDeepCSV0p5_2p4_v1",  "tagged_noL1"]  ,
         inFileMC, binning=effBinning)
     
     eff_mass_trig3   = makeEff(plot_names[i],
-        ["HLT_QuadPFPuppiJet_75_60_45_40_2p4_v1",  "deepCSV_noL1"]  ,
+        ["tagged_HLT_QuadPFPuppiJet_75_60_45_40_2p4_v1",  "tagged_noL1"]  ,
         inFileMC, binning=effBinning)
     
     drawComp(plot_names[i]+"_Efficiency",[(eff_mass_wDeepCut, "L1 only", ROOT.kBlue),
@@ -63,11 +63,11 @@ for i in range(0, len(plots)):
     can = ROOT.TCanvas()
     
     no_cuts = 'noCuts'
-    L1_wDeepCSVCut = 'L1_wDeepCSVCut'
-    deepCSV_noL1 = 'deepCSV_noL1'
-    trig1 = 'HLT_PFHT330PT30_QuadPFPuppiJet_75_60_45_40_2p4_v1'
-    trig2 = 'HLT_PFHT330PT30_QuadPFPuppiJet_75_60_45_40_TriplePFPuppiBTagDeepCSV0p5_2p4_v1'
-    trig3 = 'HLT_QuadPFPuppiJet_75_60_45_40_2p4_v1'
+    L1_wDeepCSVCut = 'tagged_L1'
+    deepCSV_noL1 = 'tagged_noL1'
+    trig1 = 'tagged_HLT_PFHT330PT30_QuadPFPuppiJet_75_60_45_40_2p4_v1'
+    trig2 = 'tagged_HLT_PFHT330PT30_QuadPFPuppiJet_75_60_45_40_TriplePFPuppiBTagDeepCSV0p5_2p4_v1'
+    trig3 = 'tagged_HLT_QuadPFPuppiJet_75_60_45_40_2p4_v1'
     
     hist2 = inFileMC.Get(L1_wDeepCSVCut+'/'+plots[i])
     hist= inFileMC.Get(deepCSV_noL1+'/'+plots[i])
@@ -122,7 +122,7 @@ can.SetLogy(1)
 can.SaveAs(o.outDir+'/DeepCSV_precut.png')
 can.Clear()
 
-hist_deepCSV2 = inFileMC.Get('L1_wDeepCSVCut'+'/deepCSV')
+hist_deepCSV2 = inFileMC.Get('tagged_L1'+'/deepCSV')
 hist_deepCSV2.Draw()
 hist_deepCSV2.GetXaxis().SetTitle("DeepCSV score")
 can.SaveAs(o.outDir+'/DeepCSV_trigCut.png')
@@ -137,3 +137,41 @@ for i in range(0,len(trig_plots)):
     can.SetLogy(0)
     can.SaveAs(o.outDir+'/'+trig_plots[i]+'.png')
     can.Clear()
+
+
+eff_ht   = makeEff("Ht",
+    ["tagged_HLT_PFHT330PT30_QuadPFPuppiJet_75_60_45_40_2p4_v1","tagged_HLT_QuadPFPuppiJet_75_60_45_40_2p4_v1"],
+     inFileMC, binning=effBinning)
+ 
+#eff_mass_trig3   = makeEff(plot_names[i],
+ #   ["HLT_QuadPFPuppiJet_75_60_45_40_2p4_v1",  "deepCSV_noL1"]  ,
+  #   inFileMC, binning=effBinning)
+ 
+drawComp("tagged_Ht_Efficiency",[(eff_ht, "Ht to Quad", ROOT.kRed),
+                                     ],
+             yTitle="Efficiency", xTitle="Ht (GeV)", otherText="DeepCSV > 0.3",
+             xMin = -0.2, xMax = 1000, yMax = 1.2, xStartOther=600, yStartOther=0.3,
+             outDir=o.outDir, cmsText="preliminary", lumiText="")
+
+effs_all=[]
+for i in range(1,5,1):
+    eff = makeEff("pt_"+str(i),
+                  ["tagged_HLT_QuadPFPuppiJet_75_60_45_40_2p4_v1", "tagged_L1"],
+                  inFileMC, binning=effBinning)
+
+    eff_name = (eff, "pt_"+str(i), 2*i)
+
+    effs_all.append(eff_name)
+
+    drawComp("pt_"+str(i)+"_ratio_Quad_Only", [eff_name],
+              yTitle="Efficiency", xTitle="pt (GeV)", otherText="DeepCSV > 0.3",
+              xMin=-0.2, xMax = 1000, yMax = 1.2, xStartOther=600, yStartOther=0.3,
+              outDir=o.outDir, cmsText="preliminary", lumiText="Quad Only")
+
+drawComp("pt_ratio_Quad_Only", effs_all,
+         yTitle="Efficiency", xTitle="pt (GeV)", otherText="DeepCSV > 0.3",
+         xMin=-0.2, xMax = 1000, yMax = 1.2, xStartOther=600, yStartOther=0.3,
+         outDir=o.outDir, cmsText="preliminary", lumiText="Quad Only")
+
+
+
