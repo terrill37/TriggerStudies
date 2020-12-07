@@ -133,7 +133,7 @@ eventData::eventData(TChain* _treeRAW, TChain* _treeAOD, bool mc, std::string y,
   if(jetSFName == "2018") jetSFName = "deepcsv2018";
 
 //FIXME in twice?
-  if(doOffline) offTreeJets = new nTupleAnalysis::jetData("Jet",treeRaw, true, isMC, jetDetailLevel, "", jetSFName);
+  if(doOffline)  offTreeJets  = new nTupleAnalysis::jetData( "Jet",  treeRAW, true, isMC,  jetDetailLevel, "",      jetSFName);
   
   if(doOffline)  offTreeJets  = new nTupleAnalysis::jetData( "Jet",  treeRAW, true, isMC,  jetDetailLevel, "",      jetSFName );
   pfTreeJets   = new nTupleAnalysis::jetData( "Jet",  treeRAW, true, false, jetDetailLevel, "PFJet."       );
@@ -167,6 +167,8 @@ eventData::eventData(TChain* _treeRAW, TChain* _treeAOD, bool mc, std::string y,
   if(treeRAW->FindBranch("nGenJets")){
     genJetTree = new nTupleAnalysis::truthData(treeRAW, debug, "GenJet");
   }
+
+  //genJets=new truthData(tree, debug, "GenJet");
 
 }
 

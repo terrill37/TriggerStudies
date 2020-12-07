@@ -146,9 +146,11 @@ int HH4bAnalysis::processEvent(){
   //For Truth particle testing
   //
     
+  cout<<"before GenJet Loop"<<endl;
   std::vector<nTupleAnalysis::particlePtr> genJets = event->genJetTree->truthParticles->getParticles();
   for(const nTupleAnalysis::particlePtr& truthPart : genJets){
     cout<<"genJet"<<truthPart->pt << "/" <<truthPart->eta << "/" <<truthPart->phi<<endl;
+    cout<<"in genJet loop"<<endl;
   }
 
   for(const nTupleAnalysis::jetPtr& offJet : event->offJets){
