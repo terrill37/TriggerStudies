@@ -139,9 +139,18 @@ int HH4bAnalysis::processEvent(){
   
   //constants
   float deepCSV_cut = 0.3;
-  float eta_cut     = 4.0;
+  float eta_cut     = 2.4;
   float pt_cut      = 30 ;
   
+  //
+  //For Truth particle testing
+  //
+    
+  std::vector<nTupleAnalysis::particlePtr> genJets = event->genJetTree->truthParticles->getParticles();
+  for(const nTupleAnalysis::particlePtr& truthPart : genJets){
+    cout<<"genJet"<<truthPart->pt << "/" <<truthPart->eta << "/" <<truthPart->phi<<endl;
+  }
+
   for(const nTupleAnalysis::jetPtr& offJet : event->offJets){
     triggers -> Fillpt_all(offJet->pt);
     if(offJet->pt < pt_cut) continue;
