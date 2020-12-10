@@ -15,7 +15,7 @@ using std::vector;  using std::map; using std::string; using std::set;
 
 
 
-HH4bAnalysis::HH4bAnalysis(TChain* _eventsRAW, TChain* _eventsAOD, fwlite::TFileService& fs, bool _debug){
+HH4bAnalysis::HH4bAnalysis(TChain* _eventsRAW, fwlite::TFileService& fs, bool _debug, std::string jetDetailString){
   
   
   if(_debug) cout<<"In HH4bAnalysis constructor"<<endl;
@@ -24,11 +24,7 @@ HH4bAnalysis::HH4bAnalysis(TChain* _eventsRAW, TChain* _eventsAOD, fwlite::TFile
   eventsRAW     = _eventsRAW;
   eventsRAW->SetBranchStatus("*", 0);
 
-  eventsAOD     = _eventsAOD;
-  eventsAOD->SetBranchStatus("*", 0);
-
-
-  event      = new eventData(eventsRAW, eventsAOD, true, "2018", debug, "");
+  event      = new eventData(eventsRAW, nullptr, true, "2018", debug, jetDetailString);
   treeEvents = eventsRAW->GetEntries();
 
   cutflow    = new nTupleAnalysis::cutflowHists("cutflow", fs);
@@ -126,6 +122,8 @@ int HH4bAnalysis::eventLoop(int maxEvents, int nSkipEvents){
 
 
   minutes = static_cast<int>(duration/60);
+ 
+
   seconds = static_cast<int>(duration - minutes*60);
 
 
@@ -138,7 +136,9 @@ int HH4bAnalysis::processEvent(){
  // cout<<"event"<<endl;
   
   //constants
-  float deepCSV_cut = 0.3;
+  //float deepCSV_cut = 0.3;
+  int flavour_b = 5;
+  int flavour_c = 4;
   float eta_cut     = 2.4;
   float pt_cut      = 30 ;
   
@@ -146,26 +146,26 @@ int HH4bAnalysis::processEvent(){
   //For Truth particle testing
   //
     
-  cout<<"before GenJet Loop"<<endl;
-  std::vector<nTupleAnalysis::particlePtr> genJets = event->genJetTree->truthParticles->getParticles();
+  //cout<<"before GenJet Loop"<<endl;
+  
   if(debug){
-    for(const nTupleAnalysis::particlePtr& truthPart : genJets){
-      cout<<"genJet"<<truthPart->pt << "/" <<truthPart->eta << "/" <<truthPart->phi<<endl;
+    for(const nTupleAnalysis::jetPtr& truthJet : event->puppiJets){
+      cout<<"genJet"<<truthJet->pt << "/" <<truthJet->eta << "/" <<truthJet->phi<<endl;
       cout<<"in genJet loop"<<endl;
     }
   }
 
-  for(const nTupleAnalysis::particlePtr& truthPart : genJets){
-    triggers -> Fillpt_all(truthPart->pt);
-    if(offJet->pt < pt_cut) continue;
-    triggers -> Fillpt_cut(truthPart->pt);
+  for(const nTupleAnalysis::jetPtr& truthJet : event->puppiJets){
+    triggers -> Fillpt_all(truthJet->pt);
+    if(truthJet->pt < pt_cut) continue;
+    triggers -> Fillpt_cut(truthJet->pt);
   }
 
   //initial pt for all events
-  for(const nTupleAnalysis::jetPtr& offJet : event->offJets){
-    triggers -> Fillpt_initial(offJet->pt);
-    break;
-  }
+  //for(const nTupleAnalysis::jetPtr& truthJet : event->puppiJets){
+    //triggers -> Fillpt_initial(truthJet->pt);
+    //break;
+  //}
 
   int bsetList[2][32];
   for(int i =0; i<2 ; i++){
@@ -182,98 +182,88 @@ int HH4bAnalysis::processEvent(){
   if(debug) cout << "processEvent start" << endl;
 
   cutflow->Fill("all", 1.0);
-
-  if(event->run != event->runAOD)
-    return 0;
-
-  if(event->event != event->eventAOD)
-    return 0;
-
-  cutflow->Fill("foundMatch", 1.0);
   //cout<<"event matched"<<endl;
 
 
   //
   //  Offline BTags
   //
-  
-  //check if L1 triggered  in event before continuing
- // if(bsetList[triggerBit_L1[0]][triggerBit_L1[1]] != 1) return 0;
 
   if(debug) cout << "Count BTags " << endl;
-  unsigned int nOffJetsForCut = 0;
+/*  unsigned int nOffJetsForCut = 0;
   unsigned int nOffJetsTaggedForCut = 0;
  
-  for(const nTupleAnalysis::jetPtr& offJet : event->offJets){
+  for(const nTupleAnalysis::jetPtr& truthJet : event->puppiJets){
     
-    if(fabs(offJet->eta) > eta_cut) continue;
-    if(offJet->pt       < pt_cut)       continue; // 40 ? 
+    if(fabs(truthJet->eta) > eta_cut) continue;
+    if(truthJet->pt       < pt_cut)       continue; // 40 ? 
 
     ++nOffJetsForCut;
     
-    if(offJet->DeepCSV > deepCSV_cut) ++nOffJetsTaggedForCut; // FIXME OFFLINE BTAG CUT: BTagged pass
+    if(truthJet->flavour > flavour_b) ++nOffJetsTaggedForCut; // FIXME OFFLINE BTAG CUT: BTagged pass
 
-  }
+  }*/
+
   float eventWeight = 1.0;
 
   //  
-  if(nOffJetsForCut < 3      ){
-    if(debug) cout << "Fail NJet Cut" << endl;
-    return 0;
-  }
+  //if(nOffJetsForCut < 4      ){
+   // if(debug) cout << "Fail NJet Cut" << endl;
+    //return 0;
+  //}
   
-  //fill deepCSV plots
-  else{
-    for(const nTupleAnalysis::jetPtr& offJet : event->offJets){
-        if(fabs(offJet->eta) > eta_cut) continue;
-        if(offJet->pt       < pt_cut)       continue; // 40 ? 
+  //fill flavour plots
+  //else{
+    for(const nTupleAnalysis::jetPtr& truthJet : event->puppiJets){
+        if(fabs(truthJet->eta) > eta_cut) continue;
+        if(truthJet->pt       < pt_cut)       continue; // 40 ? 
 
-        mass_preCut -> Fill(offJet, eventWeight); //fill the deepCSV scores of the mass_preCut directory
+        mass_preCut -> Fill(truthJet, eventWeight); //fill the flavour vals of the mass_preCut directory
         //four jet requirement
-        if(nOffJetsTaggedForCut >= 4){
-            // pass DeepCSV cut
-            if(offJet->DeepCSV < deepCSV_cut) continue;
-            deepCut_noL1 -> Fill(offJet,eventWeight);
+        //if(nOffJetsTaggedForCut >= 4){
+            // pass flavour cut
+        if(truthJet->flavour == flavour_b) continue;
+        deepCut_noL1 -> Fill(truthJet,eventWeight);
 
-            //Pass L1
-            if(bsetList[triggerBit_L1[0]][triggerBit_L1[1]] != 1) continue;
-            L1_deepCut_tagged->Fill(offJet, eventWeight);
+        //Pass L1
+        if(bsetList[triggerBit_L1[0]][triggerBit_L1[1]] != 1) continue;
+        L1_deepCut_tagged->Fill(truthJet, eventWeight);
 
-            //first trigger
-            if(bsetList[triggerBit_1[0]][triggerBit_1[1]] ==1){
-              trig1_tagged -> Fill(offJet, eventWeight);
-            }
-            //second trigger
-            if(bsetList[triggerBit_2[0]][triggerBit_2[1]] == 1){
-              trig2_tagged -> Fill(offJet, eventWeight);
-            }
-            //third trigger
-            if(bsetList[triggerBit_3[0]][triggerBit_3[1]]==1){
-              trig3_tagged -> Fill(offJet, eventWeight);
-            }
+        //first trigger
+        if(bsetList[triggerBit_1[0]][triggerBit_1[1]] ==1){
+          trig1_tagged -> Fill(truthJet, eventWeight);
+        }
+        //second trigger
+        if(bsetList[triggerBit_2[0]][triggerBit_2[1]] == 1){
+          trig2_tagged -> Fill(truthJet, eventWeight);
+        }
+        //third trigger
+        if(bsetList[triggerBit_3[0]][triggerBit_3[1]]==1){
+          trig3_tagged -> Fill(truthJet, eventWeight);
+        }
             
-          }
+         // }
       }
-    }
-
+    //}
+/*
     if(nOffJetsForCut >= 4){
-        for(const nTupleAnalysis::jetPtr& offJet : event->offJets){
-            if(fabs(offJet->eta) > eta_cut) continue;
-            if(offJet->pt       < pt_cut)       continue;
+        for(const nTupleAnalysis::jetPtr& truthJet : event->puppiJets){
+            if(fabs(truthJet->eta) > eta_cut) continue;
+            if(truthJet->pt       < pt_cut)       continue;
 
             if(bsetList[triggerBit_L1[0]][triggerBit_L1[1]] != 1) continue;
-            L1_untagged -> Fill(offJet, eventWeight);
+            L1_untagged -> Fill(truthJet, eventWeight);
 
             if(bsetList[triggerBit_1[0]][triggerBit_1[1]] ==1){
-                trig1 -> Fill(offJet, eventWeight);
+                trig1 -> Fill(truthJet, eventWeight);
             }
 
             if(bsetList[triggerBit_2[0]][triggerBit_2[1]] == 1){
-                trig2 -> Fill(offJet, eventWeight);
+                trig2 -> Fill(truthJet, eventWeight);
             }
 
             if(bsetList[triggerBit_3[0]][triggerBit_3[1]]==1){
-                trig3 -> Fill(offJet, eventWeight);
+                trig3 -> Fill(truthJet, eventWeight);
             }
         }
     }
@@ -291,13 +281,13 @@ int HH4bAnalysis::processEvent(){
     cutflow->Fill("passNBJetCut", eventWeight);
   }
 
-  //no cuts on Trigger or DeepCSV
+  //no cuts on Trigger or flavour
   float m_preCut=0;                 //variable storage of mass
   TLorentzVector momentum_preCut;   //four momentum of variable
   float Ht_preCut=0;                //Ht values
   std::vector<float> pt_preCut;
 
-  //cuts only on DeepCSV
+  //cuts only on flavour
   float mass_deepCut_noL1=0;
   TLorentzVector momentum_deepCut_noL1;
   float Ht_deepCut_noL1=0;
@@ -307,25 +297,25 @@ int HH4bAnalysis::processEvent(){
   //tagged
   //
 
-  //cuts on L1 and DeepCSV
+  //cuts on L1 and flavour
   float mass_L1_deepCut_tagged=0;
   TLorentzVector momentum_L1_deepCut_tagged;
   float Ht_L1_deepCut_tagged=0;
   std::vector<float> pt_L1_deepCut_tagged;
   
-  //cuts on L1, DeepCSV and trigger 1
+  //cuts on L1, flavour and trigger 1
   float mass_trig1_tagged = 0;
   TLorentzVector momentum_trig1_tagged;
   float Ht_trig1_tagged=0;
   std::vector<float> pt_trig1_tagged;
   
-  //cuts on L1, DeepCSV, and trigger 2
+  //cuts on L1, flavour, and trigger 2
   float mass_trig2_tagged = 0;
   TLorentzVector momentum_trig2_tagged;
   float Ht_trig2_tagged=0;
   std::vector<float> pt_trig2_tagged;
   
-  //cuts on L1, DeepCSV, and trigger 3
+  //cuts on L1, flavour, and trigger 3
   float mass_trig3_tagged = 0;
   TLorentzVector momentum_trig3_tagged;
   float Ht_trig3_tagged = 0;
@@ -365,12 +355,12 @@ int HH4bAnalysis::processEvent(){
       
       int index = 1; //index to check only four pass; resets after each loop
       
-      for(const nTupleAnalysis::jetPtr& offJet : event->offJets){
-          if(fabs(offJet->eta) > eta_cut) continue;
-          if(offJet->pt       < pt_cut)       continue; // 40 ? 
+      for(const nTupleAnalysis::jetPtr& truthJet : event->puppiJets){
+          if(fabs(truthJet->eta) > eta_cut) continue;
+          if(truthJet->pt       < pt_cut)       continue; // 40 ? 
 
-          momentum_preCut += offJet->p;
-          pt_preCut.push_back(offJet->pt);
+          momentum_preCut += truthJet->p;
+          pt_preCut.push_back(truthJet->pt);
           if(index >=4){
               index=1;
               m_preCut = momentum_preCut.M();
@@ -384,12 +374,12 @@ int HH4bAnalysis::processEvent(){
       //L1_noCut
       if(bsetList[triggerBit_L1[0]][triggerBit_L1[1]] == 1){
           //L1_untagged
-          for(const nTupleAnalysis::jetPtr& offJet : event->offJets){    
-              if(fabs(offJet->eta) > eta_cut) continue;
-              if(offJet->pt       < pt_cut)       continue; // 40 ? 
+          for(const nTupleAnalysis::jetPtr& truthJet : event->puppiJets){    
+              if(fabs(truthJet->eta) > eta_cut) continue;
+              if(truthJet->pt       < pt_cut)       continue; // 40 ? 
 
-              momentum_L1_untagged += offJet->p;
-              pt_L1_untagged.push_back(offJet->pt);
+              momentum_L1_untagged += truthJet->p;
+              pt_L1_untagged.push_back(truthJet->pt);
               if(index>=4){
                   index=1;
                   mass_L1_untagged = momentum_L1_untagged.M();
@@ -402,12 +392,12 @@ int HH4bAnalysis::processEvent(){
           //trig1
           //cout<<"trigger mass bit: "<<bsetList[triggerBit_1[0]][triggerBit_1[1]]<<endl;
           if(bsetList[triggerBit_1[0]][triggerBit_1[1]]==1){
-              for(const nTupleAnalysis::jetPtr& offJet : event->offJets){
-                  if(fabs(offJet->eta) > eta_cut) continue;
-                  if(offJet->pt       < pt_cut)       continue; // 40 ? 
+              for(const nTupleAnalysis::jetPtr& truthJet : event->puppiJets){
+                  if(fabs(truthJet->eta) > eta_cut) continue;
+                  if(truthJet->pt       < pt_cut)       continue; // 40 ? 
 
-                  momentum_trig1 += offJet->p;
-                  pt_trig1.push_back(offJet->pt);
+                  momentum_trig1 += truthJet->p;
+                  pt_trig1.push_back(truthJet->pt);
                   if(index>=4){
                       index =1;
                       mass_trig1 = momentum_trig1.M();
@@ -421,12 +411,12 @@ int HH4bAnalysis::processEvent(){
 
           //trig2
           if(bsetList[triggerBit_2[0]][triggerBit_2[1]]==1){
-              for(const nTupleAnalysis::jetPtr& offJet : event->offJets){
-                  if(fabs(offJet->eta) > eta_cut) continue;
-                  if(offJet->pt       < pt_cut)       continue; // 40 ? 
+              for(const nTupleAnalysis::jetPtr& truthJet : event->puppiJets){
+                  if(fabs(truthJet->eta) > eta_cut) continue;
+                  if(truthJet->pt       < pt_cut)       continue; // 40 ? 
 
-                  momentum_trig2 += offJet->p;
-                  pt_trig2.push_back(offJet->pt);
+                  momentum_trig2 += truthJet->p;
+                  pt_trig2.push_back(truthJet->pt);
                   if(index>=4){
                       index=1;
                       mass_trig2 = momentum_trig2.M();
@@ -440,12 +430,12 @@ int HH4bAnalysis::processEvent(){
           
           //trig3
           if(bsetList[triggerBit_3[0]][triggerBit_3[1]]==1){
-              for(const nTupleAnalysis::jetPtr& offJet : event->offJets){
-                  if(fabs(offJet->eta) > eta_cut) continue;
-                  if(offJet->pt       < pt_cut)       continue; // 40 ? 
+              for(const nTupleAnalysis::jetPtr& truthJet : event->puppiJets){
+                  if(fabs(truthJet->eta) > eta_cut) continue;
+                  if(truthJet->pt       < pt_cut)       continue; // 40 ? 
 
-                  momentum_trig3 += offJet->p;
-                  pt_trig3.push_back(offJet->pt);
+                  momentum_trig3 += truthJet->p;
+                  pt_trig3.push_back(truthJet->pt);
                   if(index>=4){
                       index=1;
                       mass_trig3 = momentum_trig3.M();
@@ -467,13 +457,13 @@ int HH4bAnalysis::processEvent(){
       int index = 1; //index to check only four pass; resets after each loop 
 
       //deepCut_noL1
-      for(const nTupleAnalysis::jetPtr& offJet : event->offJets){
-          if(fabs(offJet->eta) > eta_cut) continue;
-          if(offJet->pt       < pt_cut)       continue; // 40 ? 
+      for(const nTupleAnalysis::jetPtr& truthJet : event->puppiJets){
+          if(fabs(truthJet->eta) > eta_cut) continue;
+          if(truthJet->pt       < pt_cut)       continue; // 40 ? 
 
-          if(offJet->DeepCSV < deepCSV_cut) continue;
-          momentum_deepCut_noL1 += offJet->p;
-          pt_deepCut_noL1.push_back(offJet->pt);
+          if(truthJet->flavour < flavour_b) continue;
+          momentum_deepCut_noL1 += truthJet->p;
+          pt_deepCut_noL1.push_back(truthJet->pt);
           if(index >=4){
               index=1;
               mass_deepCut_noL1 = momentum_deepCut_noL1.M();
@@ -488,13 +478,13 @@ int HH4bAnalysis::processEvent(){
       //L1_noCut
       if(bsetList[triggerBit_L1[0]][triggerBit_L1[1]] == 1){
           //L1_deepCut
-          for(const nTupleAnalysis::jetPtr& offJet : event->offJets){    
-              if(fabs(offJet->eta) > eta_cut) continue;
-              if(offJet->pt       < pt_cut)       continue; // 40 ? 
+          for(const nTupleAnalysis::jetPtr& truthJet : event->puppiJets){    
+              if(fabs(truthJet->eta) > eta_cut) continue;
+              if(truthJet->pt       < pt_cut)       continue; // 40 ? 
 
-              if(offJet->DeepCSV < deepCSV_cut) continue;
-              momentum_L1_deepCut_tagged += offJet->p;
-              pt_L1_deepCut_tagged.push_back(offJet->pt);
+              if(truthJet->flavour < flavour_b) continue;
+              momentum_L1_deepCut_tagged += truthJet->p;
+              pt_L1_deepCut_tagged.push_back(truthJet->pt);
               if(index>=4){
                   index=1;
                   mass_L1_deepCut_tagged = momentum_L1_deepCut_tagged.M();
@@ -508,13 +498,13 @@ int HH4bAnalysis::processEvent(){
           //trig1
           //cout<<"trigger mass bit: "<<bsetList[triggerBit_1[0]][triggerBit_1[1]]<<endl;
           if(bsetList[triggerBit_1[0]][triggerBit_1[1]]==1){
-              for(const nTupleAnalysis::jetPtr& offJet : event->offJets){
-                  if(fabs(offJet->eta) > eta_cut) continue;
-                  if(offJet->pt       < pt_cut)       continue; // 40 ? 
+              for(const nTupleAnalysis::jetPtr& truthJet : event->puppiJets){
+                  if(fabs(truthJet->eta) > eta_cut) continue;
+                  if(truthJet->pt       < pt_cut)       continue; // 40 ? 
 
-                  if(offJet->DeepCSV < deepCSV_cut) continue;
-                  momentum_trig1_tagged += offJet->p;
-                  pt_trig1_tagged.push_back(offJet->pt);
+                  if(truthJet->flavour < flavour_b) continue;
+                  momentum_trig1_tagged += truthJet->p;
+                  pt_trig1_tagged.push_back(truthJet->pt);
                   if(index>=4){
                       index =1;
                       mass_trig1_tagged = momentum_trig1_tagged.M();
@@ -528,14 +518,14 @@ int HH4bAnalysis::processEvent(){
 
           //trig2
           if(bsetList[triggerBit_2[0]][triggerBit_2[1]]==1){
-              for(const nTupleAnalysis::jetPtr& offJet : event->offJets){
-                  if(fabs(offJet->eta) > eta_cut) continue;
-                  if(offJet->pt       < pt_cut)       continue; // 40 ? 
+              for(const nTupleAnalysis::jetPtr& truthJet : event->puppiJets){
+                  if(fabs(truthJet->eta) > eta_cut) continue;
+                  if(truthJet->pt       < pt_cut)       continue; // 40 ? 
 
                   
-                  if(offJet->DeepCSV < deepCSV_cut) continue;
-                  momentum_trig2_tagged += offJet->p;
-                  pt_trig2_tagged.push_back(offJet->pt);
+                  if(truthJet->flavour < flavour_b) continue;
+                  momentum_trig2_tagged += truthJet->p;
+                  pt_trig2_tagged.push_back(truthJet->pt);
                   if(index>=4){
                       index=1;
                       mass_trig2_tagged = momentum_trig2_tagged.M();
@@ -549,14 +539,14 @@ int HH4bAnalysis::processEvent(){
           
           //trig3
           if(bsetList[triggerBit_3[0]][triggerBit_3[1]]==1){
-              for(const nTupleAnalysis::jetPtr& offJet : event->offJets){
-                  if(fabs(offJet->eta) > eta_cut) continue;
-                  if(offJet->pt       < pt_cut)       continue; // 40 ? 
+              for(const nTupleAnalysis::jetPtr& truthJet : event->puppiJets){
+                  if(fabs(truthJet->eta) > eta_cut) continue;
+                  if(truthJet->pt       < pt_cut)       continue; // 40 ? 
 
                   
-                  if(offJet->DeepCSV < deepCSV_cut) continue;
-                  momentum_trig3_tagged += offJet->p;
-                  pt_trig3_tagged.push_back(offJet->pt);
+                  if(truthJet->flavour < flavour_b) continue;
+                  momentum_trig3_tagged += truthJet->p;
+                  pt_trig3_tagged.push_back(truthJet->pt);
                   if(index>=4){
                       index=1;
                       mass_trig3_tagged = momentum_trig3_tagged.M();
@@ -583,30 +573,30 @@ int HH4bAnalysis::processEvent(){
   
   //tagged filling
   if(nOffJetsTaggedForCut >= 4){
-    for(const nTupleAnalysis::jetPtr& offJet : event->offJets){
-        if(fabs(offJet->eta) > eta_cut) continue;
-        if(offJet->pt       < pt_cut)       continue; 
+    for(const nTupleAnalysis::jetPtr& truthJet : event->puppiJets){
+        if(fabs(truthJet->eta) > eta_cut) continue;
+        if(truthJet->pt       < pt_cut)       continue; 
         
-        //cut on DeepCSV
-        if(offJet->DeepCSV < deepCSV_cut) continue;
-        Ht_deepCut_noL1 += offJet -> pt;
+        //cut on flavour
+        if(truthJet->flavour < flavour_b) continue;
+        Ht_deepCut_noL1 += truthJet -> pt;
 
         if(bsetList[triggerBit_L1[0]][triggerBit_L1[1]] != 1) continue;
-        Ht_L1_deepCut_tagged += offJet->pt;
+        Ht_L1_deepCut_tagged += truthJet->pt;
         
         //trigger 1 cut
         if(bsetList[triggerBit_1[0]][triggerBit_1[1]]==1){
-            Ht_trig1_tagged += offJet->pt;
+            Ht_trig1_tagged += truthJet->pt;
         }
 
         //trigger 2 cut
         if(bsetList[triggerBit_2[0]][triggerBit_2[1]]==1){
-            Ht_trig2_tagged += offJet->pt;
+            Ht_trig2_tagged += truthJet->pt;
         }
 
         //trigger 3 cut
         if(bsetList[triggerBit_3[0]][triggerBit_3[1]]==1){
-            Ht_trig3_tagged += offJet->pt;
+            Ht_trig3_tagged += truthJet->pt;
         }
 
     }
@@ -614,33 +604,33 @@ int HH4bAnalysis::processEvent(){
   
   //untagged filling
   if(nOffJetsForCut>=4){
-    for(const nTupleAnalysis::jetPtr& offJet : event->offJets){
-        //if(fabs(offJet->eta) > eta_cut) continue;
+    for(const nTupleAnalysis::jetPtr& truthJet : event->puppiJets){
+        //if(fabs(truthJet->eta) > eta_cut) continue;
         //cut on pt
-        if(offJet->pt       < pt_cut)       continue; 
-        Ht_preCut += offJet->pt;                        //precuts should be moved to correspond with untagged events
+        if(truthJet->pt       < pt_cut)       continue; 
+        Ht_preCut += truthJet->pt;                        //precuts should be moved to correspond with untagged events
 
-        //cut on DeepCSV
-        //if(offJet->DeepCSV < deepCSV_cut) continue;
-        //Ht_deepCut_noL1 += offJet->pt;
+        //cut on flavour
+        //if(truthJet->flavour < flavour_b) continue;
+        //Ht_deepCut_noL1 += truthJet->pt;
         
         //Cut on L1
         if(bsetList[triggerBit_L1[0]][triggerBit_L1[1]] != 1) continue;
-        Ht_L1_untagged += offJet->pt;
+        Ht_L1_untagged += truthJet->pt;
         
         //trigger 1 cut
         if(bsetList[triggerBit_1[0]][triggerBit_1[1]]==1){
-            Ht_trig1 += offJet->pt;
+            Ht_trig1 += truthJet->pt;
         }
 
         //trigger 2 cut
         if(bsetList[triggerBit_2[0]][triggerBit_2[1]]==1){
-            Ht_trig2 += offJet->pt;
+            Ht_trig2 += truthJet->pt;
         }
 
         //trigger 3 cut
         if(bsetList[triggerBit_3[0]][triggerBit_3[1]]==1){
-            Ht_trig3 += offJet->pt;
+            Ht_trig3 += truthJet->pt;
         }
 
     }
@@ -680,7 +670,7 @@ int HH4bAnalysis::processEvent(){
 
    // }
   //}
-
+*/
 
   //
   // Fill All events
@@ -711,7 +701,7 @@ int HH4bAnalysis::processEvent(){
         }
     }
   }
-
+/*
   // L1 L1_PFHT330PT30_QuadPFPuppiJet_75_60_45_40_TriplePFPuppiBTagDeepCSV_2p4_v1
   //if(passTriggerBit(0,4)){
   //   h4b_L1->Fill(m4b);    
@@ -724,7 +714,7 @@ int HH4bAnalysis::processEvent(){
   ///}
   //}
 
-
+*/
   return 0;
 }
 
