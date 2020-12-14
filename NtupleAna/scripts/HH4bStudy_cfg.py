@@ -73,7 +73,7 @@ process.fwliteOutput = cms.PSet(
     )
 
 
-jetDetailString = "GenJet"
+jetDetailString = "GenJet,PuppiJets"
 
 process.HH4bAnalyzer = cms.PSet(
     debug   = cms.bool(o.debug),
