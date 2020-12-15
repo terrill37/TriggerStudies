@@ -44,6 +44,12 @@ HH4bAnalysis::HH4bAnalysis(TChain* _eventsRAW, fwlite::TFileService& fs, bool _d
   trig2_tagged   = new nTupleAnalysis::mass("tagged_HLT_PFHT330PT30_QuadPFPuppiJet_75_60_45_40_TriplePFPuppiBTagDeepCSV0p5_2p4_v1",fs);
     trig3_tagged = new nTupleAnalysis::mass("tagged_HLT_QuadPFPuppiJet_75_60_45_40_2p4_v1",fs);
 
+  
+  triggers->AddTrig("All");
+  triggers->AddTrig("L1");
+  triggers->AddTrig("Quad");
+  triggers->AddTrig("Quad+HT");
+  triggers->AddTrig("Quad+HT+TriplePuppi");
 
   cutflow->AddCut("all");
   cutflow->AddCut("foundMatch");
@@ -175,13 +181,28 @@ int HH4bAnalysis::processEvent(){
       bsetList[i][j] = std::bitset<32>(event->BitTrigger[i])[j];
     }
   }
-
+  //will need to change 
   int triggerBit_L1[2]= {0,4};
-  int triggerBit_1[2] = {1,19}; // {nBitTrigger, BitTrigger}
-  int triggerBit_2[2] = {0,18}; // {nBitTrigger, BitTrigger}
-  int triggerBit_3[2] = {1,21};
+  int triggerBit_1[2] = {1,19}; // {nBitTrigger, BitTrigger}, Quad + Ht
+  int triggerBit_2[2] = {0,18}; // {nBitTrigger, BitTrigger}, Quad + Ht + triplePuppi
+  int triggerBit_3[2] = {1,21}; // Quad only
 
   if(debug) cout << "processEvent start" << endl;
+
+  triggers->Fill_trigCount("All");
+  if(bsetList[triggerBit_L1[0]][triggerBit_L1[1]] == 1){
+    triggers->Fill_trigCount("L1");
+  }
+  if(bsetList[triggerBit_3[0]][triggerBit_3[1]] == 1){
+    triggers->Fill_trigCount("Quad");
+  }
+  if(bsetList[triggerBit_1[0]][triggerBit_1[1]] == 1){
+    triggers->Fill_trigCount("Quad+HT");
+  }
+  if(bsetList[triggerBit_2[0]][triggerBit_2[1]] == 1){
+    triggers->Fill_trigCount("Quad+HT+TriplePuppi");
+  }
+
 
   cutflow->Fill("all", 1.0);
   //cout<<"event matched"<<endl;
@@ -217,6 +238,20 @@ int HH4bAnalysis::processEvent(){
   
   //fill flavour plots
   else{
+    triggers->Fill_trigCount2("All");
+    if(bsetList[triggerBit_L1[0]][triggerBit_L1[1]] == 1){
+      triggers->Fill_trigCount2("L1");
+    }
+    if(bsetList[triggerBit_3[0]][triggerBit_3[1]] == 1){
+      triggers->Fill_trigCount2("Quad");
+    }
+    if(bsetList[triggerBit_1[0]][triggerBit_1[1]] == 1){
+      triggers->Fill_trigCount2("Quad+HT");
+    }
+    if(bsetList[triggerBit_2[0]][triggerBit_2[1]] == 1){
+      triggers->Fill_trigCount2("Quad+HT+TriplePuppi");
+    }  
+    
     for(const nTupleAnalysis::jetPtr& truthJet : event->puppiJets){
         if(fabs(truthJet->eta) > eta_cut) continue;
         if(truthJet->pt       < pt_cut)       continue; // 40 ? 
@@ -610,7 +645,7 @@ int HH4bAnalysis::processEvent(){
   //untagged filling
   if(nTruthForCut>=4){
     for(const nTupleAnalysis::jetPtr& truthJet : event->puppiJets){
-        //if(fabs(truthJet->eta) > eta_cut) continue;
+        if(fabs(truthJet->eta) > eta_cut) continue;
         //cut on pt
         if(truthJet->pt       < pt_cut)       continue; 
         Ht_preCut += truthJet->pt;                        //precuts should be moved to correspond with untagged events
@@ -662,10 +697,10 @@ int HH4bAnalysis::processEvent(){
     if(Ht_trig1!=0){
         trig1       -> FillHt(Ht_trig1);
     }
-    if(Ht_trig2_tagged!=0){
+    if(Ht_trig2!=0){
         trig2       -> FillHt(Ht_trig2);
     }
-    if(Ht_trig3_tagged!=0){
+    if(Ht_trig3!=0){
         trig3       -> FillHt(Ht_trig3);
     }
 

@@ -82,12 +82,19 @@ def main():
                      ("tagged_HLT_PFHT330PT30_QuadPFPuppiJet_75_60_45_40_TriplePFPuppiBTagDeepCSV0p5_2p4_v1","Quad + Ht + TriplePuppi", ROOT.kBlue),
                      ]
     
-    untagged_info = [("noCuts", "noL1", ROOT.kGreen),
+    untagged_info1 = [("noCuts", "noL1", ROOT.kGreen),
                      ("L1_untagged","L1", ROOT.kBlack),
                      ("HLT_QuadPFPuppiJet_75_60_45_40_2p4_v1", "QuadOnly",ROOT.kRed),
                      ("HLT_PFHT330PT30_QuadPFPuppiJet_75_60_45_40_2p4_v1", "Quad + HT",ROOT.kMagenta),
                      ("HLT_PFHT330PT30_QuadPFPuppiJet_75_60_45_40_TriplePFPuppiBTagDeepCSV0p5_2p4_v1","Quad + Ht + TriplePuppi", ROOT.kBlue),
                      ]
+
+    untagged_info2 = [("L1_untagged","L1", ROOT.kBlack),
+                     ("HLT_QuadPFPuppiJet_75_60_45_40_2p4_v1", "QuadOnly",ROOT.kRed),
+                     ("HLT_PFHT330PT30_QuadPFPuppiJet_75_60_45_40_2p4_v1", "Quad + HT",ROOT.kMagenta),
+                     ("HLT_PFHT330PT30_QuadPFPuppiJet_75_60_45_40_TriplePFPuppiBTagDeepCSV0p5_2p4_v1","Quad + Ht + TriplePuppi", ROOT.kBlue),
+                     ]
+
 
     
     eff_plots_den = "tagged_noL1"
@@ -103,7 +110,7 @@ def main():
     plot_names = ["mass", "pt_1", "pt_2", "pt_3", "pt_4", "Ht"]
     for i in range(0, len(plot_names), 1):
         plots(plot_names[i], tagged_info,   "_tagged")
-        plots(plot_names[i], untagged_info, "_untagged")
+        plots(plot_names[i], untagged_info1, "_untagged")
 
     print("pt efficiencies of tagged")
     pts=["pt_1_cut","pt_2_cut","pt_3_cut","pt_4_cut"]
@@ -112,7 +119,8 @@ def main():
     for j in range(0, len(pts), 1):
         efficiency_plots("_tagged", pts[j], pt_plot_num, pt_plot_den, effBinning)
    
-    
+    print("Ht efficiencies")
+    efficiency_plots("_untagged", "Ht", untagged_info2, "noCuts", effBinning)
 
 
 
