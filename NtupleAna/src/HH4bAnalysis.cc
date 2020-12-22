@@ -349,15 +349,15 @@ int HH4bAnalysis::processEvent(){
           if(truthJet->pt       < pt_cut)       continue; // 40 ? 
           preCut.momentum += truthJet->p;
           preCut.pt.push_back(truthJet->pt);
-          if(index >=4){
-              index=1;
+          if(preCut.index ==4){
+              //preCut.index=1;
               preCut.mass = preCut.momentum.M();
               
               mass_preCut ->FillMass(preCut.mass);
               mass_preCut ->Fillpts(preCut.pt);
               break;
           }
-          index++;
+          preCut.index ++;
       } 
 
       //L1_noCut
@@ -369,14 +369,14 @@ int HH4bAnalysis::processEvent(){
 
               untagged_L1.momentum += truthJet->p;
               untagged_L1.pt.push_back(truthJet->pt);
-              if(index>=4){
-                  index=1;
+              if(untagged_L1.index==4){
+                  //index=1;
                   untagged_L1.mass = untagged_L1.momentum.M();
                   L1_untagged ->FillMass(untagged_L1.mass);
                   L1_untagged ->Fillpts(untagged_L1.pt);
                   break;
                 }
-                index++;
+                untagged_L1.index++;
           }
           //trig1
           //cout<<"trigger mass bit: "<<bsetList[triggerBit_1[0]][triggerBit_1[1]]<<endl;
@@ -387,14 +387,14 @@ int HH4bAnalysis::processEvent(){
 
                   untagged_trig1.momentum += truthJet->p;
                   untagged_trig1.pt.push_back(truthJet->pt);
-                  if(index>=4){
-                      index =1;
+                  if(untagged_trig1.index==4){
+                      //index =1;
                       untagged_trig1.mass = untagged_trig1.momentum.M();
                       trig1 -> FillMass(untagged_trig1.mass);
                       trig1 -> Fillpts(untagged_trig1.pt);
                       break;
                   }
-                  index++;
+                  untagged_trig1.index++;
               }
           }
 
@@ -406,14 +406,14 @@ int HH4bAnalysis::processEvent(){
 
                   untagged_trig2.momentum += truthJet->p;
                   untagged_trig2.pt.push_back(truthJet->pt);
-                  if(index>=4){
-                      index=1;
+                  if(untagged_trig2.index==4){
+                      //index=1;
                       untagged_trig2.mass = untagged_trig2.momentum.M();
                       trig2 -> FillMass(untagged_trig2.mass);
                       trig2 -> Fillpts(untagged_trig2.pt);
                       break;
                   }
-                  index++;
+                  untagged_trig2.index++;
               }
           }
           
@@ -425,14 +425,14 @@ int HH4bAnalysis::processEvent(){
 
                   untagged_trig3.momentum += truthJet->p;
                   untagged_trig3.pt.push_back(truthJet->pt);
-                  if(index>=4){
-                      index=1;
+                  if(untagged_trig3.index==4){
+                      //index=1;
                       untagged_trig3.mass = untagged_trig3.momentum.M();
                       trig3 -> FillMass(untagged_trig3.mass);
                       trig3 -> Fillpts(untagged_trig3.pt);
                       break;
                   }
-                  index++;
+                  untagged_trig3.index++;
               }
           }
 
@@ -443,7 +443,7 @@ int HH4bAnalysis::processEvent(){
   if(nTruthTaggedForCut >=4){   // at least four btagged jets
       if(debug) cout<<"pass 4 tagged"<<endl;
       
-      int index = 1; //index to check only four pass; resets after each loop 
+      //int index = 1; //index to check only four pass; resets after each loop 
 
       //deepCut_noL1
       for(const nTupleAnalysis::jetPtr& truthJet : event->puppiJets){
@@ -453,14 +453,14 @@ int HH4bAnalysis::processEvent(){
           if(truthJet->flavour != flavour_b) continue;
           noL1_deepCut.momentum += truthJet->p;
           noL1_deepCut.pt.push_back(truthJet->pt);
-          if(index >=4){
+          if(noL1_deepCut.index ==4){
               index=1;
               noL1_deepCut.mass = noL1_deepCut.momentum.M();
               deepCut_noL1->FillMass(noL1_deepCut.mass);
               deepCut_noL1->Fillpts(noL1_deepCut.pt);
               break;
           }
-          index++;
+          noL1_deepCut.index++;
           
       }
 
@@ -474,14 +474,14 @@ int HH4bAnalysis::processEvent(){
               if(truthJet->flavour != flavour_b) continue;
               tagged_L1_deepCut.momentum += truthJet->p;
               tagged_L1_deepCut.pt.push_back(truthJet->pt);
-              if(index>=4){
-                  index=1;
+              if(tagged_L1_deepCut.index==4){
+                  //index=1;
                   tagged_L1_deepCut.mass = tagged_L1_deepCut.momentum.M();
                   L1_deepCut_tagged ->FillMass(tagged_L1_deepCut.mass);
                   L1_deepCut_tagged ->Fillpts(tagged_L1_deepCut.pt);
                   break;
                 }
-                index++;
+                tagged_L1_deepCut.index++;
           }
           
           //trig1
@@ -494,14 +494,14 @@ int HH4bAnalysis::processEvent(){
                   if(truthJet->flavour != flavour_b) continue;
                   tagged_trig1.momentum += truthJet->p;
                   tagged_trig1.pt.push_back(truthJet->pt);
-                  if(index>=4){
-                      index =1;
+                  if(tagged_trig1.index==4){
+                      //index =1;
                       tagged_trig1.mass = tagged_trig1.momentum.M();
                       trig1_tagged-> FillMass(tagged_trig1.mass);
                       trig1_tagged-> Fillpts(tagged_trig1.pt);
                       break;
                   }
-                  index++;
+                  tagged_trig1.index++;
               }
           }
 
@@ -510,13 +510,12 @@ int HH4bAnalysis::processEvent(){
               for(const nTupleAnalysis::jetPtr& truthJet : event->puppiJets){
                   if(fabs(truthJet->eta) > eta_cut) continue;
                   if(truthJet->pt       < pt_cut)       continue; // 40 ? 
-
                   
                   if(truthJet->flavour != flavour_b) continue;
                   tagged_trig2.momentum += truthJet->p;
                   tagged_trig2.pt.push_back(truthJet->pt);
-                  if(index>=4){
-                      index=1;
+                  if(tagged_trig2.index==4){
+                      //index=1;
                       tagged_trig2.mass = tagged_trig2.momentum.M();
                       trig2_tagged -> FillMass(tagged_trig2.mass);
                       trig2_tagged -> Fillpts(tagged_trig2.pt);
@@ -531,19 +530,18 @@ int HH4bAnalysis::processEvent(){
               for(const nTupleAnalysis::jetPtr& truthJet : event->puppiJets){
                   if(fabs(truthJet->eta) > eta_cut) continue;
                   if(truthJet->pt       < pt_cut)       continue; // 40 ? 
-
                   
                   if(truthJet->flavour != flavour_b) continue;
                   tagged_trig3.momentum += truthJet->p;
                   tagged_trig3.pt.push_back(truthJet->pt);
-                  if(index>=4){
-                      index=1;
+                  if(tagged_trig3.index==4){
+                      //index=1;
                       tagged_trig3.mass = tagged_trig3.momentum.M();
                       trig3_tagged -> FillMass(tagged_trig3.mass);
                       trig3_tagged -> Fillpts(tagged_trig3.pt);
                       break;
                   }
-                  index++;
+                  tagged_trig3.index++;
               }
           }
 

@@ -13,6 +13,7 @@ struct HH4bStruct
     TLorentzVector momentum;
     float Ht=0;
     std::vector<float> pt;
+    int index;
 };
 
 #endif
