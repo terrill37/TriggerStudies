@@ -156,22 +156,22 @@ int HH4bAnalysis::processEvent(){
   //cout<<"before GenJet Loop"<<endl;
   
   if(debug){
-    for(const nTupleAnalysis::jetPtr& truthJet : event->puppiJets){
-      cout<<"genJet"<<truthJet->pt << "/" <<truthJet->eta << "/" <<truthJet->phi<<endl;
+    for(const nTupleAnalysis::jetPtr& puppiJet : event->puppiJets){
+      cout<<"genJet"<<puppiJet->genJet_p.Pt() << "/" <<puppiJet->genJet_p.Eta() << "/" <<puppiJet->phi<<endl;
       cout<<"in genJet loop"<<endl;
     }
   }
 
-  for(const nTupleAnalysis::jetPtr& truthJet : event->puppiJets){
-    triggers -> Fillpt_all(truthJet->pt);
-    if(truthJet->pt < pt_cut) continue;
-    triggers -> Fillpt_cut(truthJet->pt);
+  for(const nTupleAnalysis::jetPtr& puppiJet : event->puppiJets){
+    triggers -> Fillpt_all(puppiJet->genJet_p.Pt());
+    if(puppiJet->genJet_p.Pt() < pt_cut) continue;
+    triggers -> Fillpt_cut(puppiJet->genJet_p.Pt());
   }
 
   //initial pt for all events
-  for(const nTupleAnalysis::jetPtr& truthJet : event->puppiJets){
-    //cout<<"in pt_initial filling: "<< truthJet->pt <<endl;
-    triggers -> Fillpt_initial(truthJet->pt);
+  for(const nTupleAnalysis::jetPtr& puppiJet : event->puppiJets){
+    //cout<<"in pt_initial filling: "<< puppiJet->genJet_p.Pt() <<endl;
+    triggers -> Fillpt_initial(puppiJet->genJet_p.Pt());
     //triggers -> Fillpt_initial(30);
     break;
   }
@@ -217,14 +217,14 @@ int HH4bAnalysis::processEvent(){
   unsigned int nTruthForCut = 0;
   unsigned int nTruthTaggedForCut = 0;
  
-  for(const nTupleAnalysis::jetPtr& truthJet : event->puppiJets){
+  for(const nTupleAnalysis::jetPtr& puppiJet : event->puppiJets){
     
-    if(fabs(truthJet->eta) > eta_cut) continue;
-    if(truthJet->pt       < pt_cut)       continue; // 40 ? 
+    if(fabs(puppiJet->genJet_p.Eta()) > eta_cut) continue;
+    if(puppiJet->genJet_p.Pt()       < pt_cut)       continue; // 40 ? 
 
     ++nTruthForCut;
     
-    if(truthJet->flavour == flavour_b) ++nTruthTaggedForCut; // ONLINE BTAG CUT: BTagged pass
+    if(puppiJet->flavour == flavour_b) ++nTruthTaggedForCut; // ONLINE BTAG CUT: BTagged pass
 
   }
   
@@ -241,49 +241,49 @@ int HH4bAnalysis::processEvent(){
   
   //fill flavour plots
   else if(nTruthForCut>=4){
-    for(const nTupleAnalysis::jetPtr& truthJet : event->puppiJets){
-        if(fabs(truthJet->eta) > eta_cut) continue;
-        if(truthJet->pt       < pt_cut)       continue; // 40 ? 
+    for(const nTupleAnalysis::jetPtr& puppiJet : event->puppiJets){
+        if(fabs(puppiJet->genJet_p.Eta()) > eta_cut) continue;
+        if(puppiJet->genJet_p.Pt()       < pt_cut)       continue; // 40 ? 
 
-        mass_preCut -> Fill(truthJet, eventWeight); //fill the flavour vals of the mass_preCut
+        mass_preCut -> Fill(puppiJet, eventWeight); //fill the flavour vals of the mass_preCut
         
         if(bsetList[triggerBit_L1[0]][triggerBit_L1[1]] == 1){
-            L1_untagged -> Fill(truthJet, eventWeight);
+            L1_untagged -> Fill(puppiJet, eventWeight);
 
             if(bsetList[triggerBit_1[0]][triggerBit_1[1]] ==1){
-                trig1 -> Fill(truthJet, eventWeight);
+                trig1 -> Fill(puppiJet, eventWeight);
             }
 
             if(bsetList[triggerBit_2[0]][triggerBit_2[1]] == 1){
-                trig2 -> Fill(truthJet, eventWeight);
+                trig2 -> Fill(puppiJet, eventWeight);
             }
 
             if(bsetList[triggerBit_3[0]][triggerBit_3[1]]==1){
-                trig3 -> Fill(truthJet, eventWeight);
+                trig3 -> Fill(puppiJet, eventWeight);
             }
         }
 
         //four jet requirement that pass flavour b
         if(nTruthTaggedForCut >= 4){
             // pass flavour cut
-            if(truthJet->flavour != flavour_b) continue;
-            deepCut_noL1 -> Fill(truthJet,eventWeight);
+            if(puppiJet->flavour != flavour_b) continue;
+            deepCut_noL1 -> Fill(puppiJet,eventWeight);
 
             //Pass L1
             if(bsetList[triggerBit_L1[0]][triggerBit_L1[1]] != 1) continue;
-            L1_deepCut_tagged->Fill(truthJet, eventWeight);
+            L1_deepCut_tagged->Fill(puppiJet, eventWeight);
 
             //first trigger
             if(bsetList[triggerBit_1[0]][triggerBit_1[1]] ==1){
-              trig1_tagged -> Fill(truthJet, eventWeight);
+              trig1_tagged -> Fill(puppiJet, eventWeight);
             }
             //second trigger
             if(bsetList[triggerBit_2[0]][triggerBit_2[1]] == 1){
-              trig2_tagged -> Fill(truthJet, eventWeight);
+              trig2_tagged -> Fill(puppiJet, eventWeight);
             }
             //third trigger
             if(bsetList[triggerBit_3[0]][triggerBit_3[1]]==1){
-              trig3_tagged -> Fill(truthJet, eventWeight);
+              trig3_tagged -> Fill(puppiJet, eventWeight);
             }
             
           }
@@ -340,11 +340,11 @@ int HH4bAnalysis::processEvent(){
       
       //int index = 1; //index to check only four pass; resets after each loop
       
-      for(const nTupleAnalysis::jetPtr& truthJet : event->puppiJets){
-          if(fabs(truthJet->eta) > eta_cut) continue;
-          if(truthJet->pt       < pt_cut)       continue; // 40 ? 
-          preCut.momentum += truthJet->p;
-          preCut.pt.push_back(truthJet->pt);
+      for(const nTupleAnalysis::jetPtr& puppiJet : event->puppiJets){
+          if(fabs(puppiJet->genJet_p.Eta()) > eta_cut) continue;
+          if(puppiJet->genJet_p.Pt()       < pt_cut)       continue; // 40 ? 
+          preCut.momentum += puppiJet->p;
+          preCut.pt.push_back(puppiJet->genJet_p.Pt());
           if(preCut.index ==4){
               //preCut.index=1;
               preCut.mass = preCut.momentum.M();
@@ -357,8 +357,8 @@ int HH4bAnalysis::processEvent(){
           
           //L1
           if(bsetList[triggerBit_L1[0]][triggerBit_L1[1]] == 1){
-            untagged_L1.momentum += truthJet->p;
-            untagged_L1.pt.push_back(truthJet->pt);
+            untagged_L1.momentum += puppiJet->p;
+            untagged_L1.pt.push_back(puppiJet->genJet_p.Pt());
             if(untagged_L1.index==4){
                 untagged_L1.mass = untagged_L1.momentum.M();
                 L1_untagged ->FillMass(untagged_L1.mass);
@@ -368,8 +368,8 @@ int HH4bAnalysis::processEvent(){
             
             //trig1
             if(bsetList[triggerBit_1[0]][triggerBit_1[1]]==1){
-                untagged_trig1.momentum += truthJet->p;
-                untagged_trig1.pt.push_back(truthJet->pt);
+                untagged_trig1.momentum += puppiJet->p;
+                untagged_trig1.pt.push_back(puppiJet->genJet_p.Pt());
                 if(untagged_trig1.index==4){
                     untagged_trig1.mass = untagged_trig1.momentum.M();
                     trig1 -> FillMass(untagged_trig1.mass);
@@ -380,8 +380,8 @@ int HH4bAnalysis::processEvent(){
 
             //trig2
             if(bsetList[triggerBit_2[0]][triggerBit_2[1]]==1){
-                untagged_trig2.momentum += truthJet->p;
-                untagged_trig2.pt.push_back(truthJet->pt);
+                untagged_trig2.momentum += puppiJet->p;
+                untagged_trig2.pt.push_back(puppiJet->genJet_p.Pt());
                 if(untagged_trig2.index==4){
                     untagged_trig2.mass = untagged_trig2.momentum.M();
                     trig2 -> FillMass(untagged_trig2.mass);
@@ -392,8 +392,8 @@ int HH4bAnalysis::processEvent(){
             
             //trig3
             if(bsetList[triggerBit_3[0]][triggerBit_3[1]]==1){
-                untagged_trig3.momentum += truthJet->p;
-                untagged_trig3.pt.push_back(truthJet->pt);
+                untagged_trig3.momentum += puppiJet->p;
+                untagged_trig3.pt.push_back(puppiJet->genJet_p.Pt());
                 if(untagged_trig3.index==4){
                     untagged_trig3.mass = untagged_trig3.momentum.M();
                     trig3 -> FillMass(untagged_trig3.mass);
@@ -411,13 +411,13 @@ int HH4bAnalysis::processEvent(){
       if(debug) cout<<"pass 4 tagged"<<endl; 
 
       //deepCut_noL1
-      for(const nTupleAnalysis::jetPtr& truthJet : event->puppiJets){
-          if(fabs(truthJet->eta) > eta_cut) continue;
-          if(truthJet->pt       < pt_cut)       continue; // 40 ? 
+      for(const nTupleAnalysis::jetPtr& puppiJet : event->puppiJets){
+          if(fabs(puppiJet->genJet_p.Eta()) > eta_cut) continue;
+          if(puppiJet->genJet_p.Pt()       < pt_cut)       continue; // 40 ? 
 
-          if(truthJet->flavour != flavour_b) continue; //check if b
-          noL1_deepCut.momentum += truthJet->p;
-          noL1_deepCut.pt.push_back(truthJet->pt);
+          if(puppiJet->flavour != flavour_b) continue; //check if b
+          noL1_deepCut.momentum += puppiJet->p;
+          noL1_deepCut.pt.push_back(puppiJet->genJet_p.Pt());
           if(noL1_deepCut.index ==4){
               //index=1;
               noL1_deepCut.mass = noL1_deepCut.momentum.M();
@@ -428,8 +428,8 @@ int HH4bAnalysis::processEvent(){
           noL1_deepCut.index++;
           //L1
           if(bsetList[triggerBit_L1[0]][triggerBit_L1[1]] == 1){
-            tagged_L1_deepCut.momentum += truthJet->p;
-            tagged_L1_deepCut.pt.push_back(truthJet->pt);
+            tagged_L1_deepCut.momentum += puppiJet->p;
+            tagged_L1_deepCut.pt.push_back(puppiJet->genJet_p.Pt());
             if(tagged_L1_deepCut.index==4){
                 tagged_L1_deepCut.mass = tagged_L1_deepCut.momentum.M();
                 L1_deepCut_tagged ->FillMass(tagged_L1_deepCut.mass);
@@ -439,8 +439,8 @@ int HH4bAnalysis::processEvent(){
           
             //trig1
             if(bsetList[triggerBit_1[0]][triggerBit_1[1]]==1){
-              tagged_trig1.momentum += truthJet->p;
-              tagged_trig1.pt.push_back(truthJet->pt);
+              tagged_trig1.momentum += puppiJet->p;
+              tagged_trig1.pt.push_back(puppiJet->genJet_p.Pt());
               if(tagged_trig1.index==4){
                   tagged_trig1.mass = tagged_trig1.momentum.M();
                   trig1_tagged-> FillMass(tagged_trig1.mass);
@@ -451,8 +451,8 @@ int HH4bAnalysis::processEvent(){
             
             //trig2
             if(bsetList[triggerBit_2[0]][triggerBit_2[1]]==1){
-              tagged_trig2.momentum += truthJet->p;
-              tagged_trig2.pt.push_back(truthJet->pt);
+              tagged_trig2.momentum += puppiJet->p;
+              tagged_trig2.pt.push_back(puppiJet->genJet_p.Pt());
               if(tagged_trig2.index==4){
                   tagged_trig2.mass = tagged_trig2.momentum.M();
                   trig2_tagged -> FillMass(tagged_trig2.mass);
@@ -463,8 +463,8 @@ int HH4bAnalysis::processEvent(){
 
             //trig3
             if(bsetList[triggerBit_3[0]][triggerBit_3[1]]==1){
-                tagged_trig3.momentum += truthJet->p;
-                tagged_trig3.pt.push_back(truthJet->pt);
+                tagged_trig3.momentum += puppiJet->p;
+                tagged_trig3.pt.push_back(puppiJet->genJet_p.Pt());
                 if(tagged_trig3.index==4){
                     tagged_trig3.mass = tagged_trig3.momentum.M();
                     trig3_tagged -> FillMass(tagged_trig3.mass);
@@ -487,30 +487,30 @@ int HH4bAnalysis::processEvent(){
   
   //tagged filling
   if(nTruthTaggedForCut >= 4){
-    for(const nTupleAnalysis::jetPtr& truthJet : event->puppiJets){
-        if(fabs(truthJet->eta) > eta_cut) continue;
-        if(truthJet->pt       < pt_cut)       continue; 
+    for(const nTupleAnalysis::jetPtr& puppiJet : event->puppiJets){
+        if(fabs(puppiJet->genJet_p.Eta()) > eta_cut) continue;
+        if(puppiJet->genJet_p.Pt()       < pt_cut)       continue; 
         
         //cut on flavour
-        if(truthJet->flavour != flavour_b) continue;
-        noL1_deepCut.Ht += truthJet -> pt;
+        if(puppiJet->flavour != flavour_b) continue;
+        noL1_deepCut.Ht += puppiJet -> pt;
 
         if(bsetList[triggerBit_L1[0]][triggerBit_L1[1]] != 1) continue;
-        tagged_L1_deepCut.Ht += truthJet->pt;
+        tagged_L1_deepCut.Ht += puppiJet->genJet_p.Pt();
         
         //trigger 1 cut
         if(bsetList[triggerBit_1[0]][triggerBit_1[1]]==1){
-            tagged_trig1.Ht += truthJet->pt;
+            tagged_trig1.Ht += puppiJet->genJet_p.Pt();
         }
 
         //trigger 2 cut
         if(bsetList[triggerBit_2[0]][triggerBit_2[1]]==1){
-            tagged_trig2.Ht += truthJet->pt;
+            tagged_trig2.Ht += puppiJet->genJet_p.Pt();
         }
 
         //trigger 3 cut
         if(bsetList[triggerBit_3[0]][triggerBit_3[1]]==1){
-            tagged_trig3.Ht += truthJet->pt;
+            tagged_trig3.Ht += puppiJet->genJet_p.Pt();
         }
 
     }
@@ -518,29 +518,29 @@ int HH4bAnalysis::processEvent(){
   
   //untagged filling
   if(nTruthForCut>=4){
-    for(const nTupleAnalysis::jetPtr& truthJet : event->puppiJets){
-        if(fabs(truthJet->eta) > eta_cut) continue;
+    for(const nTupleAnalysis::jetPtr& puppiJet : event->puppiJets){
+        if(fabs(puppiJet->genJet_p.Eta()) > eta_cut) continue;
         //cut on pt
-        if(truthJet->pt       < pt_cut)       continue; 
-        preCut.Ht += truthJet->pt;                        //precuts should be moved to correspond with untagged events
+        if(puppiJet->genJet_p.Pt()       < pt_cut)       continue; 
+        preCut.Ht += puppiJet->genJet_p.Pt();                        //precuts should be moved to correspond with untagged events
 
         //Cut on L1
         if(bsetList[triggerBit_L1[0]][triggerBit_L1[1]] != 1) continue;
-        untagged_L1.Ht += truthJet->pt;
+        untagged_L1.Ht += puppiJet->genJet_p.Pt();
         
         //trigger 1 cut
         if(bsetList[triggerBit_1[0]][triggerBit_1[1]]==1){
-            untagged_trig1.Ht += truthJet->pt;
+            untagged_trig1.Ht += puppiJet->genJet_p.Pt();
         }
 
         //trigger 2 cut
         if(bsetList[triggerBit_2[0]][triggerBit_2[1]]==1){
-            untagged_trig2.Ht += truthJet->pt;
+            untagged_trig2.Ht += puppiJet->genJet_p.Pt();
         }
 
         //trigger 3 cut
         if(bsetList[triggerBit_3[0]][triggerBit_3[1]]==1){
-            untagged_trig3.Ht += truthJet->pt;
+            untagged_trig3.Ht += puppiJet->genJet_p.Pt();
         }
 
     }

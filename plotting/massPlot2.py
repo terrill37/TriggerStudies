@@ -76,53 +76,47 @@ def main():
     effBinning = 5
     
     print("mass efficiency")
-    tagged_info   = [("tagged_L1","L1", ROOT.kBlack),
+    tagged_info   = [("tagged_noL1", "noL1", ROOT.kGreen),
+                     ("tagged_L1","L1", ROOT.kBlack),
                      ("tagged_HLT_QuadPFPuppiJet_75_60_45_40_2p4_v1", "QuadOnly",ROOT.kRed),
                      ("tagged_HLT_PFHT330PT30_QuadPFPuppiJet_75_60_45_40_2p4_v1", "Quad + HT",ROOT.kMagenta),
                      ("tagged_HLT_PFHT330PT30_QuadPFPuppiJet_75_60_45_40_TriplePFPuppiBTagDeepCSV0p5_2p4_v1","Quad + Ht + TriplePuppi", ROOT.kBlue),
                      ]
     
-    untagged_info1 = [("noCuts", "noL1", ROOT.kGreen),
+    untagged_info = [("noCuts", "noL1", ROOT.kGreen),
                      ("L1_untagged","L1", ROOT.kBlack),
                      ("HLT_QuadPFPuppiJet_75_60_45_40_2p4_v1", "QuadOnly",ROOT.kRed),
                      ("HLT_PFHT330PT30_QuadPFPuppiJet_75_60_45_40_2p4_v1", "Quad + HT",ROOT.kMagenta),
                      ("HLT_PFHT330PT30_QuadPFPuppiJet_75_60_45_40_TriplePFPuppiBTagDeepCSV0p5_2p4_v1","Quad + Ht + TriplePuppi", ROOT.kBlue),
                      ]
-
-    untagged_info2 = [("L1_untagged","L1", ROOT.kBlack),
-                     ("HLT_QuadPFPuppiJet_75_60_45_40_2p4_v1", "QuadOnly",ROOT.kRed),
-                     ("HLT_PFHT330PT30_QuadPFPuppiJet_75_60_45_40_2p4_v1", "Quad + HT",ROOT.kMagenta),
-                     ("HLT_PFHT330PT30_QuadPFPuppiJet_75_60_45_40_TriplePFPuppiBTagDeepCSV0p5_2p4_v1","Quad + Ht + TriplePuppi", ROOT.kBlue),
-                     ]
-
-
     
     eff_plots_den = "tagged_noL1"
 
-    efficiency_plots("_tagged", "mass", tagged_info, eff_plots_den, effBinning)
-    
-    #print(tagged_info)
-    tagged_info.insert(0, ("tagged_noL1", "noL1", ROOT.kGreen))
-    #print(tagged_info)
+    efficiency_plots("_tagged", "mass", tagged_info[1:], tagged_info[0][0], effBinning)
     
 
     print("tagged plots and untagged plots")
     plot_names = ["mass", "pt_1", "pt_2", "pt_3", "pt_4", "Ht"]
     for i in range(0, len(plot_names), 1):
         plots(plot_names[i], tagged_info,   "_tagged")
-        plots(plot_names[i], untagged_info1, "_untagged")
+        plots(plot_names[i], untagged_info, "_untagged")
 
     print("pt efficiencies of tagged")
     pts=["pt_1_cut","pt_2_cut","pt_3_cut","pt_4_cut"]
     pt_plot_num = [("tagged_HLT_QuadPFPuppiJet_75_60_45_40_2p4_v1", "QuadOnly",ROOT.kRed)]
     pt_plot_den = "tagged_L1"
     for j in range(0, len(pts), 1):
-        efficiency_plots("_tagged", pts[j], pt_plot_num, pt_plot_den, effBinning)
-   
+        efficiency_plots("_tagged", pts[j], pt_plot_num, pt_plot_den, 2)
+    
+
+#   file_name, plot_name, eff_num, eff_denom, effBinning
     print("Ht efficiencies")
-    efficiency_plots("_untagged", "Ht", untagged_info2, "noCuts", effBinning)
-
-
+    print("untagged")
+    efficiency_plots("_untagged", "Ht", untagged_info[1:], "noCuts", effBinning)
+    efficiency_plots("_HtToQuad_untagged", "Ht", [untagged_info[3]], untagged_info[2][0], effBinning)
+    print("tagged")
+    efficiency_plots("_tagged", "Ht", tagged_info[1:], "noCuts", effBinning)
+    efficiency_plots("_HtToQuad_tagged", "Ht", [tagged_info[3]], tagged_info[2][0], effBinning)
 
 if __name__ == "__main__":
     main()
