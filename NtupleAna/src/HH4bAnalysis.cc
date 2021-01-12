@@ -293,17 +293,6 @@ int HH4bAnalysis::processEvent(){
   cutflow->Fill("passNJetCut", eventWeight);
   if(debug) cout << "Pass NJet Cut " << endl;
 
-  //FIXME location
-  /*bool doOnlineBTagCut = true;
-  if(doOnlineBTagCut){
-  
-    if(nTruthTaggedForCut < 3) { //should be 4
-      if(debug) cout << "Fail NBJet Cut" << endl;
-      return 0;
-    }
-    cutflow->Fill("passNBJetCut", eventWeight);
-  }*/
-
   //no cuts on Trigger or flavour
   HH4bStruct preCut; 
   //cuts only on flavour
@@ -475,7 +464,6 @@ int HH4bAnalysis::processEvent(){
           }
       } 
   } //end of at least 4 b's
-  
     
     //
     //
@@ -493,7 +481,7 @@ int HH4bAnalysis::processEvent(){
         
         //cut on flavour
         if(puppiJet->flavour != flavour_b) continue;
-        noL1_deepCut.Ht += puppiJet -> pt;
+        noL1_deepCut.Ht += puppiJet -> genJet_p.Pt();
 
         if(bsetList[triggerBit_L1[0]][triggerBit_L1[1]] != 1) continue;
         tagged_L1_deepCut.Ht += puppiJet->genJet_p.Pt();
@@ -581,7 +569,7 @@ int HH4bAnalysis::processEvent(){
    // }
   //}
 
-  /*bool doOnlineBTagCut = true;
+  bool doOnlineBTagCut = true;
   if(doOnlineBTagCut){
   
     if(nTruthTaggedForCut < 4) { //should be 4, formerly 3
@@ -589,9 +577,7 @@ int HH4bAnalysis::processEvent(){
       return 0;
     }
     cutflow->Fill("passNBJetCut", eventWeight);
-  }*/
-
-
+  }
 
   //
   // Fill All events
@@ -625,7 +611,6 @@ int HH4bAnalysis::processEvent(){
 
   return 0;
 }
-
 
 HH4bAnalysis::~HH4bAnalysis(){
   cout << "HH4bAnalysis::destroyed" << endl;

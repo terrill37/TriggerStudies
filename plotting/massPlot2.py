@@ -106,7 +106,7 @@ def main():
     pt_plot_num = [("tagged_HLT_QuadPFPuppiJet_75_60_45_40_2p4_v1", "QuadOnly",ROOT.kRed)]
     pt_plot_den = "tagged_L1"
     for j in range(0, len(pts), 1):
-        efficiency_plots("_tagged", pts[j], pt_plot_num, pt_plot_den, 2)
+        efficiency_plots("_tagged", pts[j], pt_plot_num, pt_plot_den, 1)
     
 
 #   file_name, plot_name, eff_num, eff_denom, effBinning
@@ -115,7 +115,7 @@ def main():
     efficiency_plots("_untagged", "Ht", untagged_info[1:], "noCuts", effBinning)
     efficiency_plots("_HtToQuad_untagged", "Ht", [untagged_info[3]], untagged_info[2][0], effBinning)
     print("tagged")
-    efficiency_plots("_tagged", "Ht", tagged_info[1:], "noCuts", effBinning)
+    efficiency_plots("_tagged", "Ht", tagged_info[1:], tagged_info[0][0], effBinning)
     efficiency_plots("_HtToQuad_tagged", "Ht", [tagged_info[3]], tagged_info[2][0], effBinning)
 
 if __name__ == "__main__":
