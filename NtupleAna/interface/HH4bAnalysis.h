@@ -17,7 +17,7 @@
 #include "nTupleAnalysis/baseClasses/interface/eventHists.h"
 #include "nTupleAnalysis/baseClasses/interface/triggers.h"
 #include "nTupleAnalysis/baseClasses/interface/mass.h"
-
+#include "nTupleAnalysis/baseClasses/interface/events.h"
 
 namespace TriggerStudies {
 
@@ -53,6 +53,9 @@ namespace TriggerStudies {
     nTupleAnalysis::mass* trig1_tagged;
     nTupleAnalysis::mass* trig2_tagged;  
     nTupleAnalysis::mass* trig3_tagged;
+    
+    //Jet count
+    nTupleAnalysis::events* jetCount;
 
     long int nEvents = 0;
 

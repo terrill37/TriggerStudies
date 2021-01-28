@@ -35,7 +35,7 @@ def efficiency_plots(file_name, plot_name, eff_num, eff_denom, effBinning):
              outDir=o.outDir, cmsText="preliminary", lumiText="")
 
 
-def plots(plot_name, plot_dir, file_name=""):
+def plots(plot_name, plot_dir, file_name="", log_on=False, units=" (GeV)"):
     can = ROOT.TCanvas()
 
     plots=[]
@@ -51,7 +51,7 @@ def plots(plot_name, plot_dir, file_name=""):
         hist.SetMarkerColor(plot_dir[i][2])
 
         hist.GetYaxis().SetTitle("Entries")
-        hist.GetXaxis().SetTitle(plot_name+" (GeV)")
+        hist.GetXaxis().SetTitle(plot_name+units)
 
         leg.AddEntry(hist, plot_dir[i][1], 'L')
 
@@ -69,7 +69,42 @@ def plots(plot_name, plot_dir, file_name=""):
     can.SaveAs(o.outDir+'/'+plot_name+file_name+'.png')
     can.Clear()
 
+def plot_comp(plot_name, plot_dir, file_name="", log_on=False, units=" (GeV)"):
+    can = ROOT.TCanvas()
 
+    plots=[]
+    leg = ROOT.TLegend(0.55, 0.6, 0.85, 0.85)
+    leg.SetBorderSize(0)
+    leg.SetTextFont(42)
+    leg.SetTextSize(0.035)
+    
+    for i in range(0, len(plot_name), 1):
+        hist = inFileMC.Get(plot_dir + '/' + plot_name[i][0])
+        
+        hist.SetLineColor(plot_name[i][2])
+        hist.SetMarkerColor(plot_name[i][2])
+
+        hist.GetYaxis().SetTitle("Entries")
+        hist.GetXaxis().SetTitle(plot_name[i][0]+units)
+
+        leg.AddEntry(hist, plot_name[i][1], 'L')
+
+        plots.append(hist)
+    
+    can.cd()
+    can.SetLogy(log_on) 
+    
+
+    plots[0].Draw()
+    for j in range(1, len(plots), 1):
+        #print(j)
+        plots[j].Draw('same')
+
+    leg.Draw('same')
+
+    can.SaveAs(o.outDir+'/'+plot_dir+file_name+'.png')
+    can.Clear()
+ 
 
 
 def main():
@@ -102,11 +137,11 @@ def main():
         plots(plot_names[i], untagged_info, "_untagged")
 
     print("pt efficiencies of tagged")
-    pts=["pt_1_cut","pt_2_cut","pt_3_cut","pt_4_cut"]
+    pts=["pt_1_cut","pt_2_cut","pt_3_cut","pt_4_cut", "pt_1", "pt_2", "pt_3", "pt_4"]
     pt_plot_num = [("tagged_HLT_QuadPFPuppiJet_75_60_45_40_2p4_v1", "QuadOnly",ROOT.kRed)]
     pt_plot_den = "tagged_L1"
     for j in range(0, len(pts), 1):
-        efficiency_plots("_tagged", pts[j], pt_plot_num, pt_plot_den, 1)
+        efficiency_plots("_tagged", pts[j], pt_plot_num, pt_plot_den, effBinning)
     
 
 #   file_name, plot_name, eff_num, eff_denom, effBinning
@@ -117,6 +152,24 @@ def main():
     print("tagged")
     efficiency_plots("_tagged", "Ht", tagged_info[1:], tagged_info[0][0], effBinning)
     efficiency_plots("_HtToQuad_tagged", "Ht", [tagged_info[3]], tagged_info[2][0], effBinning)
+
+#   Jet Counts
+    print("Jet Counts")
+    jetCounts = [("all_Jets",  "All event Jet Count",    ROOT.kBlack), 
+                 ("Jets_pt",   "Jets pass pt",           ROOT.kRed), 
+                 ("Jets_eta",  "Jets pass pt+eta",       ROOT.kBlue),
+                 ("Jets_b",    "B-jets",                 ROOT.kGreen+2),
+                 ("Jets_L1",   "Jets pass L1",           ROOT.kMagenta),
+                 ("Jets_quad", "Jets pass quad",         ROOT.kCyan),
+                 ("Jets_Ht",   "Jets pass Ht",           ROOT.kViolet),
+                 ("Jets_tri",  "Jets pass triple Puppi", ROOT.kPink+9),
+                 ]
+    for j in range(0, len(jetCounts), 1):
+        plots(jetCounts[j][0], [("Jet_Counts", jetCounts[j][1], ROOT.kBlack)], "_Jet_Count",
+              log_on=True, units="")
+
+    plot_comp(jetCounts, "Jet_Counts", file_name="_comp", 
+              log_on=True, units="")
 
 if __name__ == "__main__":
     main()

@@ -43,8 +43,9 @@ HH4bAnalysis::HH4bAnalysis(TChain* _eventsRAW, fwlite::TFileService& fs, bool _d
   L1_deepCut_tagged = new nTupleAnalysis::mass("tagged_L1", fs);
   trig1_tagged   = new nTupleAnalysis::mass("tagged_HLT_PFHT330PT30_QuadPFPuppiJet_75_60_45_40_2p4_v1",fs);
   trig2_tagged   = new nTupleAnalysis::mass("tagged_HLT_PFHT330PT30_QuadPFPuppiJet_75_60_45_40_TriplePFPuppiBTagDeepCSV0p5_2p4_v1",fs);
-    trig3_tagged = new nTupleAnalysis::mass("tagged_HLT_QuadPFPuppiJet_75_60_45_40_2p4_v1",fs);
+  trig3_tagged   = new nTupleAnalysis::mass("tagged_HLT_QuadPFPuppiJet_75_60_45_40_2p4_v1",fs);
 
+  jetCount = new nTupleAnalysis::events("Jet_Counts",fs);
   
   triggers->AddTrig("All");
   triggers->AddTrig("L1");
@@ -148,13 +149,65 @@ int HH4bAnalysis::processEvent(){
   int flavour_c = 4;
   float eta_cut     = 2.4;
   float pt_cut      = 30 ;
-  
+  unsigned int minJet = 3;
+  unsigned int minBJet = 2;
+
+
+  int bsetList[2][32];
+  for(int i =0; i<2 ; i++){
+    for(int j =0; j<32; j++){
+      bsetList[i][j] = std::bitset<32>(event->BitTrigger[i])[j];
+    }
+  }
+  //will need to change 
+  int triggerBit_L1[2]= {0,4};
+  int triggerBit_1[2] = {1,19}; // {nBitTrigger, BitTrigger}, Quad + Ht
+  int triggerBit_2[2] = {0,18}; // {nBitTrigger, BitTrigger}, Quad + Ht + triplePuppi
+  int triggerBit_3[2] = {1,21}; // Quad only
+
+
   //
   //For Truth particle testing
   //
     
   //cout<<"before GenJet Loop"<<endl;
   
+  std::vector<int> jetCounter (9) ;
+  for(const nTupleAnalysis::jetPtr& puppiJet : event->puppiJets){
+    jetCounter.at(0)++;
+    
+    if(puppiJet->genJet_p.Pt()       < pt_cut)       continue;
+    jetCounter.at(1)++;
+
+    if(puppiJet->genJet_p.Eta()      > eta_cut)      continue;
+    jetCounter.at(2)++;
+
+    if(puppiJet->flavour == flavour_b){
+        jetCounter.at(3)++;
+
+        if(bsetList[triggerBit_L1[0]][triggerBit_L1[1]] == 1){
+          jetCounter.at(4)++;
+        } 
+
+        if(bsetList[triggerBit_3[0]][triggerBit_3[1]] == 1){
+          jetCounter.at(5)++;
+        }
+
+        if(bsetList[triggerBit_1[0]][triggerBit_1[1]] == 1){
+          jetCounter.at(6)++;
+        }
+
+        if(bsetList[triggerBit_2[0]][triggerBit_2[1]] == 1){
+          jetCounter.at(7)++;
+        }
+    }
+  }
+  jetCount -> FillAll(jetCounter);
+  
+  if(debug){
+    cout<<"Jet Count: "<<jetCounter.at(0)<<endl;
+  }
+
   if(debug){
     for(const nTupleAnalysis::jetPtr& puppiJet : event->puppiJets){
       cout<<"genJet"<<puppiJet->genJet_p.Pt() << "/" <<puppiJet->genJet_p.Eta() << "/" <<puppiJet->phi<<endl;
@@ -170,24 +223,11 @@ int HH4bAnalysis::processEvent(){
 
   //initial pt for all events
   for(const nTupleAnalysis::jetPtr& puppiJet : event->puppiJets){
-    //cout<<"in pt_initial filling: "<< puppiJet->genJet_p.Pt() <<endl;
     triggers -> Fillpt_initial(puppiJet->genJet_p.Pt());
-    //triggers -> Fillpt_initial(30);
     break;
   }
 
-  int bsetList[2][32];
-  for(int i =0; i<2 ; i++){
-    for(int j =0; j<32; j++){
-      bsetList[i][j] = std::bitset<32>(event->BitTrigger[i])[j];
-    }
-  }
-  //will need to change 
-  int triggerBit_L1[2]= {0,4};
-  int triggerBit_1[2] = {1,19}; // {nBitTrigger, BitTrigger}, Quad + Ht
-  int triggerBit_2[2] = {0,18}; // {nBitTrigger, BitTrigger}, Quad + Ht + triplePuppi
-  int triggerBit_3[2] = {1,21}; // Quad only
-
+  
   if(debug) cout << "processEvent start" << endl;
 
   triggers->Fill_trigCount("All");
@@ -232,15 +272,11 @@ int HH4bAnalysis::processEvent(){
   
   float eventWeight = 1.0;
   
-  //potential FIXME
-  // Make sure at least four jets exist in Event  
-  if(nTruthForCut < 4      ){
-    if(debug) cout << "Fail NJet Cut" << endl;
-    return 0;
-  }
+  
+ 
   
   //fill flavour plots
-  else if(nTruthForCut>=4){
+  if(nTruthForCut >= minJet){
     for(const nTupleAnalysis::jetPtr& puppiJet : event->puppiJets){
         if(fabs(puppiJet->genJet_p.Eta()) > eta_cut) continue;
         if(puppiJet->genJet_p.Pt()       < pt_cut)       continue; // 40 ? 
@@ -264,7 +300,7 @@ int HH4bAnalysis::processEvent(){
         }
 
         //four jet requirement that pass flavour b
-        if(nTruthTaggedForCut >= 4){
+        if(nTruthTaggedForCut >= minBJet){
             // pass flavour cut
             if(puppiJet->flavour != flavour_b) continue;
             deepCut_noL1 -> Fill(puppiJet,eventWeight);
@@ -290,8 +326,8 @@ int HH4bAnalysis::processEvent(){
       }
     }
   
-  cutflow->Fill("passNJetCut", eventWeight);
-  if(debug) cout << "Pass NJet Cut " << endl;
+  //cutflow->Fill("passNJetCut", eventWeight);
+  //if(debug) cout << "Pass NJet Cut " << endl;
 
   //no cuts on Trigger or flavour
   HH4bStruct preCut; 
@@ -324,7 +360,7 @@ int HH4bAnalysis::processEvent(){
   //cuts on L1 and trigger 3
   HH4bStruct untagged_trig3;
 
-  if(nTruthForCut >= 4){ // at least four jets
+  if(nTruthForCut >= minJet){ // at least four jets
   if(debug) cout<<"pass 4 jets"<<endl;
       
       //int index = 1; //index to check only four pass; resets after each loop
@@ -332,9 +368,10 @@ int HH4bAnalysis::processEvent(){
       for(const nTupleAnalysis::jetPtr& puppiJet : event->puppiJets){
           if(fabs(puppiJet->genJet_p.Eta()) > eta_cut) continue;
           if(puppiJet->genJet_p.Pt()       < pt_cut)       continue; // 40 ? 
+          
           preCut.momentum += puppiJet->p;
           preCut.pt.push_back(puppiJet->genJet_p.Pt());
-          if(preCut.index ==4){
+          if(preCut.index == 4){
               //preCut.index=1;
               preCut.mass = preCut.momentum.M();
               
@@ -396,7 +433,7 @@ int HH4bAnalysis::processEvent(){
       } 
   }// end of at least four jets
   
-  if(nTruthTaggedForCut >=4){   // at least four btagged jets
+  if(nTruthTaggedForCut >= minBJet){   // at least four btagged jets
       if(debug) cout<<"pass 4 tagged"<<endl; 
 
       //deepCut_noL1
@@ -474,7 +511,7 @@ int HH4bAnalysis::processEvent(){
     //
   
   //tagged filling
-  if(nTruthTaggedForCut >= 4){
+  if(nTruthTaggedForCut >= minBJet){
     for(const nTupleAnalysis::jetPtr& puppiJet : event->puppiJets){
         if(fabs(puppiJet->genJet_p.Eta()) > eta_cut) continue;
         if(puppiJet->genJet_p.Pt()       < pt_cut)       continue; 
@@ -505,7 +542,7 @@ int HH4bAnalysis::processEvent(){
   }
   
   //untagged filling
-  if(nTruthForCut>=4){
+  if(nTruthForCut >= minJet){
     for(const nTupleAnalysis::jetPtr& puppiJet : event->puppiJets){
         if(fabs(puppiJet->genJet_p.Eta()) > eta_cut) continue;
         //cut on pt
@@ -568,11 +605,17 @@ int HH4bAnalysis::processEvent(){
 
    // }
   //}
+  
+  // Make sure at least four jets exist in Event  
+  if(nTruthForCut < minJet      ){
+    if(debug) cout << "Fail NJet Cut" << endl;
+    return 0;
+  }
 
   bool doOnlineBTagCut = true;
   if(doOnlineBTagCut){
   
-    if(nTruthTaggedForCut < 4) { //should be 4, formerly 3
+    if(nTruthTaggedForCut < minBJet) { 
       if(debug) cout << "Fail NBJet Cut" << endl;
       return 0;
     }
@@ -583,7 +626,7 @@ int HH4bAnalysis::processEvent(){
   // Fill All events
   //
   if(debug) cout << "Fill All Events " << endl;
-  //hEvents->Fill(event->offPVs.size(),  0.0, eventWeight);
+ 
 
   if(debug){  
     std::bitset<32> bset(event->BitTrigger[0]);
@@ -602,9 +645,6 @@ int HH4bAnalysis::processEvent(){
     for(long unsigned int j = 0; j < 32; j++){
       if(bset[j]==1){
         triggers -> Fill(j + 32*i);
-        //if(std::bitset<32> (event->BitTrigger[0])[0] == 1){
-          //triggers_L1Cut -> Fill(j+32*i);
-        //}
         }
     }
   }
