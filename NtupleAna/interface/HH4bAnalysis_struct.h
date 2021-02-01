@@ -12,7 +12,7 @@ struct HH4bStruct
     float mass=0;
     TLorentzVector momentum;
     float Ht=0;
-    std::vector<float> pt;
+    std::vector<float> pt;// = std::vector<float>(100);
     int index=1;
 };
 
